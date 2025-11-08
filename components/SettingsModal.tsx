@@ -3,6 +3,7 @@ import { User } from '../types';
 import { Icon } from './Icon';
 import { LanguageContext } from '../contexts/LanguageContext';
 import { SUPPORTED_LANGUAGES, TTS_VOICES } from '../constants';
+import { ThemeContext } from '../contexts/ThemeContext';
 
 interface SettingsModalProps {
   user: User;
@@ -14,6 +15,7 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ user, onClose, onUpdateUser, onDeleteAccount, onShowPrivacyPolicy }) => {
   const { language, setLanguage, t } = useContext(LanguageContext)!;
+  const { theme, setTheme } = useContext(ThemeContext)!;
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -27,6 +29,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ user, onClose, onU
     onUpdateUser({ ...user, voicePreference: newVoice });
   };
 
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
+    onUpdateUser({ ...user, theme: newTheme });
+  };
+
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-fade-in">
       <div className="bg-brand-surface w-full max-w-lg rounded-2xl border border-brand-secondary shadow-2xl p-6 md:p-8 animate-slide-in-up">
@@ -36,6 +43,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ user, onClose, onU
         </div>
 
         <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-brand-text-muted mb-2">Theme</label>
+            <div className="flex bg-brand-bg border border-brand-secondary rounded-lg p-1 space-x-1">
+              <button
+                onClick={() => handleThemeChange('light')}
+                className={`w-full py-2 rounded-md font-semibold transition-colors ${theme === 'light' ? 'bg-brand-surface text-brand-text shadow' : 'text-brand-text-muted hover:bg-brand-surface/50'}`}
+              >
+                Light
+              </button>
+              <button
+                onClick={() => handleThemeChange('dark')}
+                className={`w-full py-2 rounded-md font-semibold transition-colors ${theme === 'dark' ? 'bg-brand-surface text-brand-text shadow' : 'text-brand-text-muted hover:bg-brand-surface/50'}`}
+              >
+                Dark
+              </button>
+            </div>
+          </div>
           <div>
             <label className="block text-sm font-medium text-brand-text-muted mb-2">{t('settings.language')}</label>
             <select

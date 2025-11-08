@@ -318,6 +318,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
                               onboardingCompleted: true,
                               lastHuddleDate: null,
                               language,
+                              theme: 'dark',
                               subscription: { plan: 'free' },
                               dailyTranslations: { date: '', count: 0 },
                               consent: {

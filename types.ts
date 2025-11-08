@@ -20,6 +20,7 @@ export interface User {
   lastHuddleDate: string | null;
   language: string;
   voicePreference?: string;
+  theme?: 'light' | 'dark';
   subscription: {
     plan: 'free' | 'pro' | 'team';
   };

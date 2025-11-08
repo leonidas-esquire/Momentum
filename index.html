@@ -1,26 +1,49 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Momentum: The Irresistible Habit App</title>
+    <style>
+      :root {
+        --color-brand-bg: #F9FAFB;
+        --color-brand-surface: #FFFFFF;
+        --color-brand-primary: #8A42D6;
+        --color-brand-secondary: #D1D5DB;
+        --color-brand-text: #111827;
+        --color-brand-text-muted: #6B7280;
+        --color-brand-safe: #16A34A;
+        --color-brand-warning: #F97316;
+        --color-brand-danger: #EF4444;
+      }
+      html.dark {
+        --color-brand-bg: #101014;
+        --color-brand-surface: #1B1B1F;
+        --color-brand-primary: #8A42D6;
+        --color-brand-secondary: #4B4B5A;
+        --color-brand-text: #E4E4E6;
+        --color-brand-text-muted: #A0A0B0;
+        --color-brand-safe: #22C55E;
+        --color-brand-warning: #F97316;
+        --color-brand-danger: #EF4444;
+      }
+    </style>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              'brand-bg': '#101014',
-              'brand-surface': '#1B1B1F',
-              'brand-primary': '#8A42D6',
-              'brand-secondary': '#4B4B5A',
-              'brand-text': '#E4E4E6',
-              'brand-text-muted': '#A0A0B0',
-              'brand-safe': '#22C55E',
-              'brand-warning': '#F97316',
-              'brand-danger': '#EF4444',
+              'brand-bg': 'var(--color-brand-bg)',
+              'brand-surface': 'var(--color-brand-surface)',
+              'brand-primary': 'var(--color-brand-primary)',
+              'brand-secondary': 'var(--color-brand-secondary)',
+              'brand-text': 'var(--color-brand-text)',
+              'brand-text-muted': 'var(--color-brand-text-muted)',
+              'brand-safe': 'var(--color-brand-safe)',
+              'brand-warning': 'var(--color-brand-warning)',
+              'brand-danger': 'var(--color-brand-danger)',
             },
             animation: {
               'fade-in': 'fadeIn 0.5s ease-in-out',

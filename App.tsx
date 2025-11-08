@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Onboarding } from './components/Onboarding';
 import { Dashboard } from './components/Dashboard';
 import { User, Habit, DailyDebrief, Squad, Team, Financials, SquadQuest, SquadSaga, ChatMessage, TeamChallenge, AssistRequest, UserIdentity } from './types';
@@ -8,6 +8,7 @@ import { ChapterUnlockModal } from './components/ChapterUnlockModal';
 import { Chatbot } from './components/Chatbot';
 import { RallyPointModal } from './components/RallyPointModal';
 import { isToday, isYesterday } from './utils/date';
+import { ThemeContext } from './contexts/ThemeContext';
 
 
 // MOCK DATA - In a real application, this would come from a backend API
@@ -38,6 +39,7 @@ const App: React.FC = () => {
   const [showChapterUnlock, setShowChapterUnlock] = useState<{identity: UserIdentity, chapter: any} | null>(null);
   const [showChatbot, setShowChatbot] = useState(false);
   const [rallyPointHabit, setRallyPointHabit] = useState<Habit | null>(null);
+  const { setTheme } = useContext(ThemeContext)!;
   
   // Load data from localStorage on initial render
   useEffect(() => {
@@ -68,6 +70,13 @@ const App: React.FC = () => {
       console.error("Failed to parse data from localStorage", error);
     }
   }, []);
+
+  // Sync theme when user object changes
+  useEffect(() => {
+    if (user?.theme) {
+      setTheme(user.theme);
+    }
+  }, [user, setTheme]);
 
   // Persist data to localStorage whenever it changes
   useEffect(() => {
