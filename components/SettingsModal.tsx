@@ -11,9 +11,10 @@ interface SettingsModalProps {
   onUpdateUser: (user: User) => void;
   onDeleteAccount: () => void;
   onShowPrivacyPolicy: () => void;
+  onShowTermsOfService: () => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ user, onClose, onUpdateUser, onDeleteAccount, onShowPrivacyPolicy }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ user, onClose, onUpdateUser, onDeleteAccount, onShowPrivacyPolicy, onShowTermsOfService }) => {
   const { language, setLanguage, t } = useContext(LanguageContext)!;
   const { theme, setTheme } = useContext(ThemeContext)!;
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -87,10 +88,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ user, onClose, onU
 
           <div className="border-t border-brand-secondary pt-6">
             <h3 className="text-lg font-semibold mb-4">{t('settings.privacy')}</h3>
-            <button onClick={onShowPrivacyPolicy} className="w-full text-left bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text hover:border-brand-primary/50 flex justify-between items-center">
-              <span>{t('settings.viewPolicy')}</span>
-              <Icon name="arrow-right" className="w-5 h-5" />
-            </button>
+            <div className="space-y-2">
+              <button onClick={onShowPrivacyPolicy} className="w-full text-left bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text hover:border-brand-primary/50 flex justify-between items-center">
+                <span>{t('settings.viewPolicy')}</span>
+                <Icon name="arrow-right" className="w-5 h-5" />
+              </button>
+              <button onClick={onShowTermsOfService} className="w-full text-left bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text hover:border-brand-primary/50 flex justify-between items-center">
+                <span>{t('settings.viewTerms')}</span>
+                <Icon name="arrow-right" className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div className="border-t border-brand-danger/20 pt-6">

@@ -9,6 +9,7 @@ interface OnboardingProps {
   onComplete: (user: User, habits: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields'>[]) => void;
   onTriggerUpgrade: (reason: string) => void;
   onShowPrivacyPolicy: () => void;
+  onShowTermsOfService: () => void;
 }
 
 type OnboardingStep = 'welcome' | 'user-info' | 'identity-select' | 'blueprint' | 'loss-framing' | 'statement' | 'complete';
@@ -53,7 +54,7 @@ const BlueprintHabitCard: React.FC<{
 );
 
 
-export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpgrade, onShowPrivacyPolicy }) => {
+export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpgrade, onShowPrivacyPolicy, onShowTermsOfService }) => {
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -127,17 +128,17 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
       
       case 'user-info':
         return (
-          <div className="text-center animate-fade-in max-w-md mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">{t('onboarding.userInfo.title')}</h2>
-            <p className="text-brand-text-muted mb-8">{t('onboarding.userInfo.subtitle')}</p>
-            <form onSubmit={(e) => { e.preventDefault(); setStep('identity-select'); }} className="space-y-6">
+          <div className="text-center animate-fade-in max-w-sm mx-auto">
+            <h2 className="text-4xl font-bold mb-2">{t('onboarding.userInfo.title')}</h2>
+            <p className="text-lg text-brand-text-muted mb-8">{t('onboarding.userInfo.subtitle')}</p>
+            <form onSubmit={(e) => { e.preventDefault(); setStep('identity-select'); }} className="space-y-4 text-left">
               <div>
                 <input
                   type="text"
                   placeholder={t('onboarding.userInfo.namePlaceholder')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-brand-surface border border-brand-secondary rounded-lg p-4 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
+                  className="w-full bg-brand-surface border border-brand-secondary/50 rounded-lg p-4 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
                   required
                 />
               </div>
@@ -147,33 +148,40 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
                   placeholder={t('onboarding.userInfo.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-brand-surface border border-brand-secondary rounded-lg p-4 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
+                  className="w-full bg-brand-surface border border-brand-secondary/50 rounded-lg p-4 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
                   required
                 />
               </div>
-               <div className="flex items-start gap-3 text-left">
-                  <input
-                    id="consent-checkbox"
-                    type="checkbox"
-                    checked={hasConsented}
-                    onChange={(e) => setHasConsented(e.target.checked)}
-                    className="mt-1 h-5 w-5 rounded border-brand-secondary text-brand-primary focus:ring-brand-primary"
-                    required
-                  />
-                  <label htmlFor="consent-checkbox" className="text-sm text-brand-text-muted">
-                    {t('onboarding.consent.prefix')}{' '}
-                    <button type="button" onClick={onShowPrivacyPolicy} className="font-semibold text-brand-primary hover:underline">{t('onboarding.consent.privacyPolicy')}</button>{' '}
-                    {t('onboarding.consent.and')}{' '}
-                     <span className="font-semibold text-brand-primary cursor-pointer hover:underline">{t('onboarding.consent.terms')}</span>.
+               <div className="pt-2">
+                  <label htmlFor="consent-checkbox" className="flex items-center gap-3 text-sm text-brand-text-muted cursor-pointer group">
+                     <div className={`w-6 h-6 rounded border-2 ${hasConsented ? 'border-brand-primary bg-brand-primary' : 'border-brand-secondary group-hover:border-brand-primary'} flex-shrink-0 flex items-center justify-center transition-colors`}>
+                        {hasConsented && <Icon name="check" className="w-4 h-4 text-white" />}
+                    </div>
+                    <input
+                      id="consent-checkbox"
+                      type="checkbox"
+                      checked={hasConsented}
+                      onChange={(e) => setHasConsented(e.target.checked)}
+                      className="sr-only"
+                      required
+                    />
+                    <span className="text-left">
+                      {t('onboarding.consent.prefix')}{' '}
+                      <button type="button" onClick={onShowPrivacyPolicy} className="font-medium text-brand-primary hover:underline">{t('onboarding.consent.privacyPolicy')}</button>{' '}
+                      {t('onboarding.consent.and')}{' '}
+                      <button type="button" onClick={onShowTermsOfService} className="font-medium text-brand-primary hover:underline">{t('onboarding.consent.terms')}</button>.
+                    </span>
                   </label>
                 </div>
-              <button 
-                type="submit"
-                disabled={!name.trim() || !email.trim() || !hasConsented}
-                className="w-full bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg disabled:bg-brand-secondary disabled:cursor-not-allowed hover:bg-opacity-80 transition-colors duration-300 flex items-center justify-center gap-2 mx-auto"
-              >
-                {t('onboarding.buttons.next')} <Icon name="arrow-right" className="w-5 h-5" />
-              </button>
+              <div className="pt-4">
+                <button 
+                  type="submit"
+                  disabled={!name.trim() || !email.trim() || !hasConsented}
+                  className="w-full bg-brand-primary text-white font-bold py-4 px-8 rounded-xl text-lg disabled:bg-brand-secondary disabled:cursor-not-allowed hover:bg-opacity-80 transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  {t('onboarding.buttons.next')}
+                </button>
+              </div>
             </form>
           </div>
         );

@@ -13,7 +13,7 @@
       "terms": "Términos de Servicio"
     },
     "buttons": {
-      "next": "Siguiente",
+      "next": "Siguiente →",
       "adopt": "Adoptar {{count}} Hábitos",
       "continue": "Continuar",
       "noThanks": "No, gracias",
@@ -43,6 +43,7 @@
   },
   "habitBuilder": {
     "title": "Crear un Nuevo Hábito",
+    "editTitle": "Editar Hábito",
     "question1": "¿Qué quieres hacer?",
     "placeholder1": "Ej: Escribir 500 palabras",
     "placeholder2": "Descripción (opcional)",
@@ -52,7 +53,8 @@
     "cueWorkout": "Después de mi entrenamiento",
     "cueLunch": "Durante mi almuerzo",
     "cueBed": "Antes de dormir",
-    "button": "Añadir Hábito"
+    "button": "Añadir Hábito",
+    "editButton": "Guardar Cambios"
   },
   "dashboard": {
     "debriefedButton": "Resumen Hecho",
@@ -136,6 +138,7 @@
     "voice": "Preferencia de Voz de IA",
     "privacy": "Privacidad y Datos",
     "viewPolicy": "Ver Política de Privacidad",
+    "viewTerms": "Ver Términos de Servicio",
     "deleteAccount": "Eliminar Cuenta",
     "deleteWarning": "Esto eliminará permanentemente tu cuenta y todos los datos asociados. Esta acción no se puede deshacer.",
     "cancel": "Cancelar",
@@ -144,6 +147,10 @@
   },
   "privacyPolicy": {
     "title": "Política de Privacidad",
+    "close": "Cerrar"
+  },
+  "termsOfService": {
+    "title": "Términos de Servicio",
     "close": "Cerrar"
   },
   "dailyDebrief": {

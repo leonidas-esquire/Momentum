@@ -13,7 +13,7 @@
       "terms": "Terms of Service"
     },
     "buttons": {
-      "next": "Next",
+      "next": "Next →",
       "adopt": "Adopt {{count}} Habits",
       "continue": "Continue",
       "noThanks": "No, thanks",
@@ -43,6 +43,7 @@
   },
   "habitBuilder": {
     "title": "Build a New Habit",
+    "editTitle": "Edit Habit",
     "question1": "What do you want to do?",
     "placeholder1": "e.g., Write 500 words",
     "placeholder2": "Description (optional)",
@@ -52,7 +53,8 @@
     "cueWorkout": "After my workout",
     "cueLunch": "During my lunch break",
     "cueBed": "Before bed",
-    "button": "Add Habit"
+    "button": "Add Habit",
+    "editButton": "Save Changes"
   },
   "dashboard": {
     "debriefedButton": "Debriefed",
@@ -136,6 +138,7 @@
     "voice": "AI Voice Preference",
     "privacy": "Privacy & Data",
     "viewPolicy": "View Privacy Policy",
+    "viewTerms": "View Terms of Service",
     "deleteAccount": "Delete Account",
     "deleteWarning": "This will permanently delete your account and all associated data. This action cannot be undone.",
     "cancel": "Cancel",
@@ -144,6 +147,10 @@
   },
   "privacyPolicy": {
     "title": "Privacy Policy",
+    "close": "Close"
+  },
+  "termsOfService": {
+    "title": "Terms of Service",
     "close": "Close"
   },
   "dailyDebrief": {

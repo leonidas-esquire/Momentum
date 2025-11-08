@@ -11,9 +11,10 @@ interface HabitCardProps {
   onDelete: (id: string) => void;
   onToggleFavorite: (id: string) => void;
   onStartVoiceNote: (id: string) => void;
+  onEdit: (id: string) => void;
 }
 
-export const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onUndo, onDelete, onToggleFavorite, onStartVoiceNote }) => {
+export const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onUndo, onDelete, onToggleFavorite, onStartVoiceNote, onEdit }) => {
   const isCompleted = isToday(habit.lastCompleted);
 
   const handleComplete = (e: React.MouseEvent) => {
@@ -36,6 +37,11 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onUndo,
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleFavorite(habit.id);
+  }
+  
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit(habit.id);
   }
 
   const handleVoiceNote = (e: React.MouseEvent) => {
@@ -68,6 +74,9 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onUndo,
       <div className="flex-shrink-0 flex items-center gap-1 sm:gap-2">
         <button onClick={handleToggleFavorite} className="text-brand-text-muted hover:text-yellow-400 p-2 rounded-full hover:bg-brand-secondary/20 transition-colors">
             <Icon name="star" solid={habit.isFavorite} className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+        <button onClick={handleEdit} className="text-brand-text-muted hover:text-brand-primary p-2 rounded-full hover:bg-brand-secondary/20 transition-colors">
+            <Icon name="pencil" className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
         <button onClick={handleDelete} className="text-brand-text-muted hover:text-brand-danger p-2 rounded-full hover:bg-brand-secondary/20 transition-colors">
             <Icon name="trash" className="w-5 h-5 sm:w-6 sm:h-6" />

@@ -22,12 +22,13 @@ interface DashboardProps {
   user: User;
   habits: Habit[];
   onUpdateUser: (user: User) => void;
-  onAddHabit: (newHabit: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields'>) => void;
+  onAddHabit: (newHabit: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields' | 'missedDays'>) => void;
   onUpdateHabit: (updatedHabit: Habit) => void;
   onDeleteHabit: (id: string) => void;
   onSignOut: () => void;
   onTriggerUpgrade: (reason: string) => void;
   onShowPrivacyPolicy: () => void;
+  onShowTermsOfService: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -40,6 +41,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onSignOut,
   onTriggerUpgrade,
   onShowPrivacyPolicy,
+  onShowTermsOfService,
 }) => {
   const { t } = useContext(LanguageContext)!;
   const [showHabitBuilder, setShowHabitBuilder] = useState(false);
@@ -47,6 +49,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showWeeklyReview, setShowWeeklyReview] = useState(false);
   const [showDailyDebrief, setShowDailyDebrief] = useState(false);
   const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null);
+  const [habitToEdit, setHabitToEdit] = useState<Habit | null>(null);
   const [assistRequest, setAssistRequest] = useState<AssistRequest | null>(MOCK_ASSIST_REQUESTS.length > 0 ? MOCK_ASSIST_REQUESTS[0] : null);
 
   const todayStr = getTodayDateString();
@@ -121,6 +124,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
       const habit = habits.find(h => h.id === id);
       if (!habit) return;
       onUpdateHabit({ ...habit, isFavorite: !habit.isFavorite });
+  };
+  
+  const handleEditHabit = (id: string) => {
+    const habit = habits.find(h => h.id === id);
+    if (habit) {
+      setHabitToEdit(habit);
+      setShowHabitBuilder(true);
+    }
+  };
+
+  const handleSaveHabit = (habitData: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields' | 'missedDays'> | Habit) => {
+    if ('id' in habitData) {
+      onUpdateHabit(habitData as Habit);
+    } else {
+      onAddHabit(habitData);
+    }
   };
 
   const handleStartVoiceNote = (id: string) => {
@@ -214,11 +233,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onDelete={() => setHabitToDelete(habit)}
                 onToggleFavorite={handleToggleFavorite}
                 onStartVoiceNote={handleStartVoiceNote}
+                onEdit={handleEditHabit}
               />
             ))}
              <button
                 onClick={() => {
                     if (habits.length < 5) {
+                        setHabitToEdit(null);
                         setShowHabitBuilder(true);
                     } else {
                         onTriggerUpgrade('habit');
@@ -236,8 +257,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         
       </main>
 
-      {showHabitBuilder && <HabitBuilder user={user} onAddHabit={onAddHabit} onClose={() => setShowHabitBuilder(false)} />}
-      {showSettings && <SettingsModal user={user} onClose={() => setShowSettings(false)} onUpdateUser={onUpdateUser} onDeleteAccount={onSignOut} onShowPrivacyPolicy={onShowPrivacyPolicy} />}
+      {showHabitBuilder && <HabitBuilder 
+        user={user} 
+        habitToEdit={habitToEdit}
+        onSaveHabit={handleSaveHabit} 
+        onClose={() => {
+            setShowHabitBuilder(false);
+            setHabitToEdit(null);
+        }} 
+      />}
+      {showSettings && <SettingsModal user={user} onClose={() => setShowSettings(false)} onUpdateUser={onUpdateUser} onDeleteAccount={onSignOut} onShowPrivacyPolicy={onShowPrivacyPolicy} onShowTermsOfService={onShowTermsOfService} />}
       {showWeeklyReview && <WeeklyReview habits={habits} onClose={() => setShowWeeklyReview(false)} />}
       {showDailyDebrief && <DailyDebriefModal user={user} habits={habits} onClose={() => setShowDailyDebrief(false)} onSave={() => {}} />}
       {habitToDelete && <DeleteConfirmation habitTitle={habitToDelete.title} onConfirm={() => { onDeleteHabit(habitToDelete.id); setHabitToDelete(null); }} onCancel={() => setHabitToDelete(null)} />}

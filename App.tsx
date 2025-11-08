@@ -4,6 +4,7 @@ import { Dashboard } from './components/Dashboard';
 import { User, Habit, DailyDebrief, Squad, Team, Financials, SquadQuest, SquadSaga, ChatMessage, TeamChallenge, AssistRequest, UserIdentity } from './types';
 import { UpgradeModal } from './components/UpgradeModal';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
+import { TermsOfServiceModal } from './components/TermsOfServiceModal';
 import { ChapterUnlockModal } from './components/ChapterUnlockModal';
 import { Chatbot } from './components/Chatbot';
 import { RallyPointModal } from './components/RallyPointModal';
@@ -36,6 +37,7 @@ const App: React.FC = () => {
   
   const [showUpgradeModal, setShowUpgradeModal] = useState<string | null>(null);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTermsOfService, setShowTermsOfService] = useState(false);
   const [showChapterUnlock, setShowChapterUnlock] = useState<{identity: UserIdentity, chapter: any} | null>(null);
   const [showChatbot, setShowChatbot] = useState(false);
   const [rallyPointHabit, setRallyPointHabit] = useState<Habit | null>(null);
@@ -159,8 +161,10 @@ const App: React.FC = () => {
           onComplete={handleOnboardingComplete}
           onTriggerUpgrade={(reason) => setShowUpgradeModal(reason)}
           onShowPrivacyPolicy={() => setShowPrivacyPolicy(true)}
+          onShowTermsOfService={() => setShowTermsOfService(true)}
         />
         {showPrivacyPolicy && <PrivacyPolicyModal onClose={() => setShowPrivacyPolicy(false)} />}
+        {showTermsOfService && <TermsOfServiceModal onClose={() => setShowTermsOfService(false)} />}
       </>
     );
   }
@@ -177,9 +181,11 @@ const App: React.FC = () => {
         onSignOut={handleSignOut}
         onTriggerUpgrade={(reason) => setShowUpgradeModal(reason)}
         onShowPrivacyPolicy={() => setShowPrivacyPolicy(true)}
+        onShowTermsOfService={() => setShowTermsOfService(true)}
       />
       {showUpgradeModal && <UpgradeModal reason={showUpgradeModal} onClose={() => setShowUpgradeModal(null)} onUpgrade={() => {}} />}
       {showPrivacyPolicy && <PrivacyPolicyModal onClose={() => setShowPrivacyPolicy(false)} />}
+      {showTermsOfService && <TermsOfServiceModal onClose={() => setShowTermsOfService(false)} />}
       {showChapterUnlock && <ChapterUnlockModal identity={showChapterUnlock.identity} newChapter={showChapterUnlock.chapter} onClose={() => setShowChapterUnlock(null)} />}
       {showChatbot && <Chatbot user={user} habits={habits} onClose={() => setShowChatbot(false)} />}
       {rallyPointHabit && <RallyPointModal habit={rallyPointHabit} onComplete={(beaconLit) => handleRallyPointComplete(beaconLit, rallyPointHabit)} />}

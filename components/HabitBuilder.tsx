@@ -1,30 +1,50 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Habit, User } from '../types';
 import { Icon } from './Icon';
 import { LanguageContext } from '../contexts/LanguageContext';
 
 interface HabitBuilderProps {
   user: User;
-  onAddHabit: (newHabit: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields'>) => void;
+  habitToEdit?: Habit | null;
+  onSaveHabit: (habitData: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields' | 'missedDays'> | Habit) => void;
   onClose: () => void;
 }
 
-export const HabitBuilder: React.FC<HabitBuilderProps> = ({ user, onAddHabit, onClose }) => {
+export const HabitBuilder: React.FC<HabitBuilderProps> = ({ user, habitToEdit, onSaveHabit, onClose }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [identityTag, setIdentityTag] = useState(user.selectedIdentities[0]?.name || '');
   const [cue, setCue] = useState('In the morning');
   const { t } = useContext(LanguageContext)!;
+
+  useEffect(() => {
+    if (habitToEdit) {
+      setTitle(habitToEdit.title);
+      setDescription(habitToEdit.description || '');
+      setIdentityTag(habitToEdit.identityTag);
+      setCue(habitToEdit.cue);
+    }
+  }, [habitToEdit]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim() && identityTag.trim() && cue.trim()) {
-      onAddHabit({
-        title,
-        description: description.trim() ? description.trim() : undefined,
-        identityTag,
-        cue,
-      });
+      if (habitToEdit) {
+        onSaveHabit({
+          ...habitToEdit,
+          title,
+          description: description.trim() ? description.trim() : undefined,
+          identityTag,
+          cue,
+        });
+      } else {
+        onSaveHabit({
+          title,
+          description: description.trim() ? description.trim() : undefined,
+          identityTag,
+          cue,
+        });
+      }
       onClose();
     }
   };
@@ -33,7 +53,7 @@ export const HabitBuilder: React.FC<HabitBuilderProps> = ({ user, onAddHabit, on
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-fade-in">
       <div className="bg-brand-surface w-full max-w-lg rounded-2xl border border-brand-secondary shadow-2xl p-6 md:p-8 animate-slide-in-up">
         <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">{t('habitBuilder.title')}</h2>
+            <h2 className="text-2xl font-bold">{habitToEdit ? t('habitBuilder.editTitle') : t('habitBuilder.title')}</h2>
             <button onClick={onClose} className="text-brand-text-muted hover:text-white">&times;</button>
         </div>
         
@@ -89,7 +109,8 @@ export const HabitBuilder: React.FC<HabitBuilderProps> = ({ user, onAddHabit, on
                     type="submit"
                     className="bg-brand-primary text-white font-bold py-3 px-6 rounded-full text-base hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2"
                 >
-                    {t('habitBuilder.button')} <Icon name="plus" className="w-5 h-5"/>
+                    {habitToEdit ? t('habitBuilder.editButton') : t('habitBuilder.button')} 
+                    <Icon name={habitToEdit ? 'check' : 'plus'} className="w-5 h-5"/>
                 </button>
             </div>
         </form>
