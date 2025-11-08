@@ -70,6 +70,7 @@ export interface User {
   teamId?: string;
   isAdmin?: boolean;
   dailyDebriefs: DailyDebrief[];
+  momentumCharges: number;
 }
 
 export interface SquadQuest {
@@ -98,6 +99,12 @@ export interface Squad {
     joinRequests: { userName: string; pitch: string; votes: { [userId: string]: 'approve' | 'deny' } }[];
     kickVotes: { [targetUserName: string]: { [voterUserId: string]: boolean } };
     saga?: SquadSaga;
+    nameChangeVote?: {
+        proposedName: string;
+        proposerId: string;
+        proposerName: string;
+        votes: { [userId: string]: boolean };
+    };
 }
 
 export interface Ripple {
@@ -105,10 +112,11 @@ export interface Ripple {
     squadId: string;
     authorId: string;
     authorName: string;
-    type: 'streak_milestone' | 'comeback' | 'identity_levelup' | 'mission_complete' | 'squad_quest_complete' | 'win_shared';
+    type: 'streak_milestone' | 'comeback' | 'identity_levelup' | 'mission_complete' | 'squad_quest_complete' | 'win_shared' | 'saga_contribution' | 'assist_request';
     message: string;
     timestamp: string;
     nudges: { nudgerName: string; message: string }[];
+    isResolved?: boolean;
 }
 
 export interface Mission {
@@ -133,10 +141,11 @@ export interface ChatMessage {
     userName: string;
     text: string;
     timestamp: string;
+    isHuddleMessage?: boolean;
 }
 
 export interface Team {
-    id: string;
+    id:string;
     name: string;
     members: {
         userId: string;

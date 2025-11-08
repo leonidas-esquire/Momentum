@@ -325,6 +325,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
                                 termsOfService: now,
                               },
                               dailyDebriefs: [],
+                              // Fix: Added missing 'momentumCharges' property to the User object.
+                              momentumCharges: 0,
                           };
                           onComplete(newUser, selectedBlueprintHabits);
                       }}

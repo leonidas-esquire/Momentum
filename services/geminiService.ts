@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { BlueprintHabit } from '../types';
+import { BlueprintHabit, Ripple } from '../types';
 
 // Fix: Initialize the GoogleGenAI client.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
@@ -157,5 +157,57 @@ export const generateDebriefQuestionsAndWin = async (habitsToday: {title: string
             ],
             shareableWin: "Made some progress today! Looking forward to crushing it again tomorrow."
         };
+    }
+};
+
+export const generateSquadHuddlePrompt = async (squadName: string, goalIdentity: string, recentRipples: Ripple[], language: string): Promise<string> => {
+    try {
+        const rippleSummary = recentRipples.map(r => ` - ${r.authorName}: ${r.message}`).join('\n');
+        const context = recentRipples.length > 0 ? `Here's what the squad has been up to:\n${rippleSummary}` : "The squad has been a bit quiet lately.";
+
+        const prompt = `You are the AI Co-Captain for a squad named "${squadName}" whose goal is to become a "${goalIdentity}".
+        
+        ${context}
+        
+        Based on this, generate one engaging, open-ended "Squad Huddle" question (max 25 words) to post in the chat. Make it encouraging and focused on either celebrating wins, overcoming obstacles, or re-engaging the team. Start the message with "Huddle time!".
+        
+        Respond in ${language}.`;
+
+        const response = await ai.models.generateContent({
+            model,
+            contents: prompt
+        });
+        return response.text.trim();
+    } catch (error) {
+        console.error("Error generating squad huddle prompt:", error);
+        return "Huddle time! What's one thing we can all do today to move closer to our goal?";
+    }
+};
+
+export const generateAssistMessages = async (requesterName: string, requesterIdentity: string, habitTitle: string, language: string): Promise<string[]> => {
+    try {
+        const prompt = `A user named ${requesterName}, who is striving to be a "${requesterIdentity}", is struggling with their habit "${habitTitle}" and has asked for help. Generate 3 short, distinct, and encouraging messages (max 15 words each) that a teammate could send them. The tone should be supportive, not demanding. Respond in ${language}.`;
+        
+        const response = await ai.models.generateContent({
+            model,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING },
+                },
+            },
+        });
+
+        const jsonString = response.text.trim();
+        return JSON.parse(jsonString);
+    } catch (error) {
+        console.error("Error generating assist messages:", error);
+        return [
+            `You've got this, ${requesterName}! One step at a time.`,
+            `Remember why you started, ${requesterIdentity}! We're here for you.`,
+            `Keep pushing! Your progress inspires us all.`
+        ];
     }
 };

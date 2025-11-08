@@ -85,6 +85,16 @@
         "title": "Momentum Mentor",
         "acceptButton": "Let's try it!",
         "dismissButton": "No, thanks"
+    },
+    "assist": {
+        "requestButton": "Request Assist",
+        "requestButtonTooltip": "Ask your squad for a motivation boost!",
+        "offerButton": "Offer Assist",
+        "modalTitle": "Offer Assist to {{name}}",
+        "modalSubtitle": "Our AI has drafted a few messages to help you encourage them. Pick one or write your own!",
+        "loading": "Generating encouragement...",
+        "customPlaceholder": "Or write your own message...",
+        "sendButton": "Send Boost"
     }
   },
   "settings": {
@@ -130,16 +140,30 @@
       "inviteButton": "Invite",
       "chatPlaceholder": "Send a message...",
       "tabs": {
+          "ripples": "Ripples",
           "chat": "Chat",
           "saga": "Saga",
           "quests": "Quests"
       },
       "saga": {
           "milestones": "Milestones",
-          "boss": "Final Challenge"
+          "boss": "Final Challenge",
+          "yourCharges": "Your Momentum Charges",
+          "contributeButton": "Contribute Momentum"
       },
       "questCompletedBy": "Completed by {{name}}",
-      "questCompleteButton": "Complete"
+      "questCompleteButton": "Complete",
+      "huddle": {
+          "title": "Squad Huddle"
+      },
+      "nameChangeVote": {
+        "title": "Name Change Vote",
+        "proposedBy": "Proposed by {{name}}",
+        "votes": "{{count}} / {{required}} votes",
+        "voteButton": "Vote to Approve",
+        "cancel": "Cancel",
+        "propose": "Propose"
+      }
   },
   "upgradeModal": {
       "title": "Unlock Momentum Pro",

@@ -8,6 +8,7 @@ import { DailyDebriefModal } from './components/DailyDebriefModal';
 import { Toast, ToastMessage } from './components/Toast';
 import { User, Habit, Squad, Ripple, Mission, ChatMessage, Team, TeamChallenge, Financials, MentorIntervention, DailyDebrief, ChapterUnlockData } from './types';
 import { getTodayDateString, isToday } from './utils/date';
+import { generateSquadHuddlePrompt } from './services/geminiService';
 
 // MOCK DATA - In a real app, this would come from a server.
 const mockInitialUser: User = {
@@ -23,6 +24,7 @@ const mockInitialUser: User = {
   dailyTranslations: { date: '', count: 0 },
   consent: { privacyPolicy: '', termsOfService: '' },
   dailyDebriefs: [],
+  momentumCharges: 0,
 };
 
 const mockSquads: Squad[] = [];
@@ -79,6 +81,44 @@ const App: React.FC = () => {
         setAllUsers(mockAllUsers);
     }, []);
 
+    // Effect for AI Squad Huddle
+    useEffect(() => {
+      const triggerSquadHuddle = async (squad: Squad, squadRipples: Ripple[], squadMessages: ChatMessage[]) => {
+          if (!user) return;
+          const lastAIMessage = squadMessages
+              .filter(m => m.userId === 'ai-co-captain')
+              .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+
+          const twentyFourHours = 24 * 60 * 60 * 1000;
+          const needsHuddle = !lastAIMessage || (new Date().getTime() - new Date(lastAIMessage.timestamp).getTime() > twentyFourHours);
+          
+          if (needsHuddle) {
+              const recentRipples = squadRipples.filter(r => new Date().getTime() - new Date(r.timestamp).getTime() < twentyFourHours);
+              const prompt = await generateSquadHuddlePrompt(squad.name, squad.goalIdentity, recentRipples, user.language);
+              
+              const newHuddleMessage: ChatMessage = {
+                  id: `chat-${Date.now()}`,
+                  squadId: squad.id,
+                  userId: 'ai-co-captain',
+                  userName: 'AI Co-Captain',
+                  text: prompt,
+                  timestamp: new Date().toISOString(),
+                  isHuddleMessage: true,
+              };
+              setChatMessages(prev => [...prev, newHuddleMessage]);
+          }
+      };
+
+      if (user?.squadId) {
+          const currentSquad = squads.find(s => s.id === user.squadId);
+          if (currentSquad) {
+              const squadMessages = chatMessages.filter(m => m.squadId === user.squadId);
+              const squadRipples = ripples.filter(r => r.squadId === user.squadId);
+              triggerSquadHuddle(currentSquad, squadRipples, squadMessages);
+          }
+      }
+    }, [user, squads, ripples, chatMessages]);
+
     const addToast = (message: string, type: ToastMessage['type']) => {
         const id = new Date().toISOString() + Math.random();
         setToasts(prev => [...prev, { id, message, type }]);
@@ -94,9 +134,9 @@ const App: React.FC = () => {
             completions: [],
             momentumShields: 0,
         }));
-        setUser(newUser);
+        setUser({...newUser, momentumCharges: 0});
         setHabits(habitsWithIds);
-        localStorage.setItem('momentum_user', JSON.stringify(newUser));
+        localStorage.setItem('momentum_user', JSON.stringify({...newUser, momentumCharges: 0}));
         localStorage.setItem('momentum_habits', JSON.stringify(habitsWithIds));
         addToast('Welcome to Momentum! Your journey begins now.', 'success');
     };
@@ -119,16 +159,48 @@ const App: React.FC = () => {
     };
 
     const handleCompleteHabit = (habitId: string) => {
-      const newHabits = habits.map(h => {
-          if (h.id === habitId && !isToday(h.lastCompleted)) {
-              const newStreak = h.streak + 1;
-              return { ...h, streak: newStreak, longestStreak: Math.max(h.longestStreak, newStreak), lastCompleted: new Date().toISOString(), completions: [...h.completions, new Date().toISOString()], };
-          }
-          return h;
-      });
-      setHabits(newHabits);
-      localStorage.setItem('momentum_habits', JSON.stringify(newHabits));
-      addToast('Great job! Momentum built.', 'info');
+        if (!user) return;
+        let chargeGenerated = false;
+
+        const newHabits = habits.map(h => {
+            if (h.id === habitId && !isToday(h.lastCompleted)) {
+                if (h.id === priorityHabitId || h.streak > 7) {
+                    chargeGenerated = true;
+                }
+                const newStreak = h.streak + 1;
+                return { ...h, streak: newStreak, longestStreak: Math.max(h.longestStreak, newStreak), lastCompleted: new Date().toISOString(), completions: [...h.completions, new Date().toISOString()], };
+            }
+            return h;
+        });
+
+        if (chargeGenerated) {
+            const updatedUser = { ...user, momentumCharges: (user.momentumCharges || 0) + 1 };
+            setUser(updatedUser);
+            localStorage.setItem('momentum_user', JSON.stringify(updatedUser));
+            addToast("You've generated a Momentum Charge! ✨", 'success');
+        } else {
+            addToast('Great job! Momentum built.', 'info');
+        }
+
+        setHabits(newHabits);
+        localStorage.setItem('momentum_habits', JSON.stringify(newHabits));
+        
+        // Check for and resolve any open assist requests
+        const openAssistRequest = ripples.find(r => r.type === 'assist_request' && r.authorId === user.id && !r.isResolved);
+        if (openAssistRequest) {
+            setRipples(ripples.map(r => r.id === openAssistRequest.id ? { ...r, isResolved: true } : r));
+            const successRipple: Ripple = {
+                id: `ripple-${Date.now()}`,
+                squadId: user.squadId!,
+                authorId: user.id,
+                authorName: user.name,
+                type: 'win_shared',
+                message: `crushed their goal with the squad's help!`,
+                timestamp: new Date().toISOString(),
+                nudges: [],
+            };
+            setRipples(prev => [successRipple, ...prev]);
+        }
     };
 
     const handleDeleteHabit = (habitId: string) => {
@@ -188,6 +260,137 @@ const App: React.FC = () => {
         setTeamChallenges([...updatedChallenges, newChallenge]);
         addToast(`New team challenge "${challenge.title}" created!`, 'success');
     };
+    
+    const handleProposeSquadNameChange = (squadId: string, proposedName: string) => {
+        if (!user) return;
+        setSquads(squads.map(s => {
+            if (s.id === squadId) {
+                return {
+                    ...s,
+                    nameChangeVote: {
+                        proposedName,
+                        proposerId: user.id,
+                        proposerName: user.name,
+                        votes: { [user.id]: true }
+                    }
+                };
+            }
+            return s;
+        }));
+        addToast('Squad name change proposed!', 'info');
+    };
+
+    const handleVoteForSquadNameChange = (squadId: string) => {
+        if (!user) return;
+        let squadToUpdate = squads.find(s => s.id === squadId);
+        if (!squadToUpdate || !squadToUpdate.nameChangeVote) return;
+
+        const updatedVote = {
+            ...squadToUpdate.nameChangeVote,
+            votes: {
+                ...squadToUpdate.nameChangeVote.votes,
+                [user.id]: true
+            }
+        };
+
+        const votesCount = Object.keys(updatedVote.votes).length;
+        const requiredVotes = Math.floor(squadToUpdate.members.length / 2) + 1;
+
+        if (votesCount >= requiredVotes) {
+            const originalName = squadToUpdate.name;
+            const newName = updatedVote.proposedName;
+            squadToUpdate = { ...squadToUpdate, name: newName, nameChangeVote: undefined };
+            addToast(`Squad name changed to "${newName}"!`, 'success');
+
+            // Add a system message to the chat
+            const systemMessage: ChatMessage = {
+                id: `chat-${Date.now()}`,
+                squadId,
+                userId: 'system',
+                userName: 'System',
+                text: `${user.name} cast the final vote. The squad name is now "${newName}".`,
+                timestamp: new Date().toISOString(),
+            };
+            setChatMessages(prev => [...prev, systemMessage]);
+
+        } else {
+            squadToUpdate = { ...squadToUpdate, nameChangeVote: updatedVote };
+        }
+        
+        setSquads(squads.map(s => s.id === squadId ? squadToUpdate! : s));
+    };
+
+    const handleContributeMomentumToSaga = (squadId: string) => {
+        if (!user || (user.momentumCharges || 0) <= 0) return;
+        
+        const SAGA_DAMAGE_PER_CHARGE = 10;
+        
+        const updatedUser = { ...user, momentumCharges: user.momentumCharges - 1 };
+        setUser(updatedUser);
+        localStorage.setItem('momentum_user', JSON.stringify(updatedUser));
+
+        setSquads(squads.map(s => {
+            if (s.id === squadId && s.saga) {
+                const newHp = Math.max(0, s.saga.boss.hp - SAGA_DAMAGE_PER_CHARGE);
+                return { ...s, saga: { ...s.saga, boss: { ...s.saga.boss, hp: newHp } } };
+            }
+            return s;
+        }));
+
+        const squad = squads.find(s => s.id === squadId);
+        if (squad) {
+            const newRipple: Ripple = {
+                id: `ripple-${Date.now()}`,
+                squadId,
+                authorId: user.id,
+                authorName: user.name,
+                type: 'saga_contribution',
+                message: `contributed momentum to the Saga, dealing ${SAGA_DAMAGE_PER_CHARGE} damage to ${squad.saga?.boss.name}!`,
+                timestamp: new Date().toISOString(),
+                nudges: [],
+            };
+            setRipples(prev => [newRipple, ...prev]);
+            addToast('Your momentum weakened the boss!', 'success');
+        }
+    };
+    
+    const handleRequestAssist = () => {
+        if (!user || !user.squadId) return;
+
+        // Prevent spamming requests
+        const existingRequest = ripples.find(r => r.type === 'assist_request' && r.authorId === user.id && !r.isResolved);
+        if (existingRequest) {
+            addToast("You already have an active assist request.", 'warning');
+            return;
+        }
+
+        const newRipple: Ripple = {
+            id: `ripple-${Date.now()}`,
+            squadId: user.squadId,
+            authorId: user.id,
+            authorName: user.name,
+            type: 'assist_request',
+            message: 'is running low on momentum and could use a boost!',
+            timestamp: new Date().toISOString(),
+            nudges: [],
+            isResolved: false,
+        };
+        setRipples(prev => [newRipple, ...prev]);
+        addToast("Squad Assist requested. Help is on the way!", 'info');
+    };
+
+    const handleOfferAssist = (rippleId: string, message: string) => {
+        if (!user) return;
+        setRipples(ripples.map(r => {
+            if (r.id === rippleId) {
+                const newNudge = { nudgerName: user.name, message };
+                return { ...r, nudges: [...r.nudges, newNudge] };
+            }
+            return r;
+        }));
+        addToast("Encouragement sent!", 'success');
+    };
+
 
     if (!user) {
         return <div>Loading...</div>; // Or a proper loading spinner
@@ -224,11 +427,14 @@ const App: React.FC = () => {
                   onOpenSettings={() => setShowSettingsModal(true)}
                   onOpenDailyDebrief={() => setShowDailyDebrief(true)}
                   onCreateTeamChallenge={handleCreateTeamChallenge}
+                  onProposeSquadNameChange={handleProposeSquadNameChange}
+                  onVoteForSquadNameChange={handleVoteForSquadNameChange}
+                  onContributeMomentumToSaga={handleContributeMomentumToSaga}
                   onRequestToJoinSquad={() => {}}
                   onVoteOnJoinRequest={() => {}}
                   onVoteToKick={() => {}}
                   onEnergySelect={() => {}}
-                  onNudge={() => {}}
+                  onNudge={handleOfferAssist}
                   onCompleteSquadQuest={() => {}}
                   onSendChatMessage={() => {}}
                   onAcceptMicroHabit={() => {}}
@@ -236,6 +442,7 @@ const App: React.FC = () => {
                   onCloseChapterUnlockModal={() => setChapterUnlockData(null)}
                   onAcceptMasteryMission={() => {}}
                   onAdoptEvolvedHabit={() => {}}
+                  onRequestAssist={handleRequestAssist}
               />
             )}
 

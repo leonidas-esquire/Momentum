@@ -213,6 +213,9 @@ interface DashboardProps {
   onRequestToJoinSquad: (squadId: string, pitch: string) => void;
   onVoteOnJoinRequest: (squadId: string, requestUserName: string, vote: 'approve' | 'deny') => void;
   onVoteToKick: (squadId: string, targetUserName: string) => void;
+  onProposeSquadNameChange: (squadId: string, newName: string) => void;
+  onVoteForSquadNameChange: (squadId: string) => void;
+  onContributeMomentumToSaga: (squadId: string) => void;
   onEnergySelect: (energy: 'low' | 'medium' | 'high') => void;
   onNudge: (rippleId: string, message: string) => void;
   onCompleteSquadQuest: (squadId: string, questId: string) => void;
@@ -223,13 +226,14 @@ interface DashboardProps {
   onOpenDailyDebrief: () => void;
   onAcceptMicroHabit: (habitId: string, microHabit: { title: string; }) => void;
   onDismissMentor: () => void;
+  onRequestAssist: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
   user, habits, squads, ripples, chatMessages, priorityHabitId, mission, teams, teamChallenges, financials, allUsers, mentorIntervention, chapterUnlockData,
   onAddHabit, onCompleteHabit, onDeleteHabit, onUpdateUser, onSetPriorityHabit,
-  onCloseChapterUnlockModal, onAcceptMasteryMission, onAdoptEvolvedHabit, onCreateSquad, onRequestToJoinSquad, onVoteOnJoinRequest, onVoteToKick, onNudge, onCompleteSquadQuest,
-  onSendChatMessage, onTriggerUpgrade, onCreateTeamChallenge, onOpenSettings, onOpenDailyDebrief, onAcceptMicroHabit, onDismissMentor
+  onCloseChapterUnlockModal, onAcceptMasteryMission, onAdoptEvolvedHabit, onCreateSquad, onRequestToJoinSquad, onVoteOnJoinRequest, onVoteToKick, onProposeSquadNameChange, onVoteForSquadNameChange, onContributeMomentumToSaga, onNudge, onCompleteSquadQuest,
+  onSendChatMessage, onTriggerUpgrade, onCreateTeamChallenge, onOpenSettings, onOpenDailyDebrief, onAcceptMicroHabit, onDismissMentor, onRequestAssist
 }) => {
   const [showHabitBuilder, setShowHabitBuilder] = useState(false);
   const [showSquadBuilder, setShowSquadBuilder] = useState(false);
@@ -442,6 +446,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     onCompleteQuest={onCompleteSquadQuest}
                     onSendChatMessage={onSendChatMessage}
                     onTriggerUpgrade={onTriggerUpgrade}
+                    onProposeSquadNameChange={onProposeSquadNameChange}
+                    onVoteForSquadNameChange={onVoteForSquadNameChange}
+                    onContributeMomentumToSaga={onContributeMomentumToSaga}
+                    habits={habits}
+                    priorityHabitId={priorityHabitId}
                   />
               </div>
 
@@ -458,10 +467,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <>
                           {priorityHabit && (
                               <div>
-                                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                      <Icon name="star" solid className="w-5 h-5 text-yellow-400" />
-                                      {t('dashboard.focus.title')}
-                                  </h2>
+                                  <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xl font-bold flex items-center gap-2">
+                                        <Icon name="star" solid className="w-5 h-5 text-yellow-400" />
+                                        {t('dashboard.focus.title')}
+                                    </h2>
+                                    {currentUserSquad && (
+                                        <button 
+                                            onClick={onRequestAssist}
+                                            className="bg-brand-secondary/50 text-brand-text-muted font-bold py-2 px-4 rounded-full text-sm hover:bg-brand-secondary flex items-center gap-2"
+                                            title={t('dashboard.assist.requestButtonTooltip')}
+                                        >
+                                           <Icon name="shield" className="w-4 h-4" /> {t('dashboard.assist.requestButton')}
+                                        </button>
+                                    )}
+                                  </div>
                                   <div className="bg-brand-primary/5 border border-brand-primary/20 rounded-xl p-1">
                                       <HabitCard 
                                           key={priorityHabit.id} 

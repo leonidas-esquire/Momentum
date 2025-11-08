@@ -1,15 +1,18 @@
 import React, { useContext } from 'react';
-import { SquadSaga } from '../types';
+import { SquadSaga, User } from '../types';
 import { Icon } from './Icon';
 import { LanguageContext } from '../contexts/LanguageContext';
 
 interface SquadSagaWidgetProps {
     saga: SquadSaga;
+    user: User;
+    onContribute: () => void;
 }
 
-export const SquadSagaWidget: React.FC<SquadSagaWidgetProps> = ({ saga }) => {
+export const SquadSagaWidget: React.FC<SquadSagaWidgetProps> = ({ saga, user, onContribute }) => {
     const { t } = useContext(LanguageContext)!;
     const bossHealthPercentage = (saga.boss.hp / saga.boss.maxHp) * 100;
+    const momentumCharges = user.momentumCharges || 0;
 
     return (
         <div className="space-y-4 animate-fade-in">
@@ -45,6 +48,22 @@ export const SquadSagaWidget: React.FC<SquadSagaWidgetProps> = ({ saga }) => {
                         style={{ width: `${bossHealthPercentage}%` }}
                     ></div>
                 </div>
+            </div>
+
+            <div className="bg-brand-bg p-4 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <p className="font-semibold">{t('squadHub.saga.yourCharges')}</p>
+                    <p className="text-3xl font-bold text-brand-primary flex items-center gap-2">
+                        <Icon name="sparkles" className="w-6 h-6" /> {momentumCharges}
+                    </p>
+                </div>
+                <button
+                    onClick={onContribute}
+                    disabled={momentumCharges <= 0}
+                    className="w-full sm:w-auto bg-brand-primary text-white font-bold py-3 px-6 rounded-full text-base hover:bg-opacity-80 transition-colors duration-300 disabled:bg-brand-secondary disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                    {t('squadHub.saga.contributeButton')} (-10 HP)
+                </button>
             </div>
         </div>
     );

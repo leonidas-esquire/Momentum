@@ -85,6 +85,16 @@
         "title": "Mentor de Momentum",
         "acceptButton": "¡Probémoslo!",
         "dismissButton": "No, gracias"
+    },
+    "assist": {
+        "requestButton": "Pedir Ayuda",
+        "requestButtonTooltip": "¡Pide a tu squad un impulso de motivación!",
+        "offerButton": "Ofrecer Ayuda",
+        "modalTitle": "Ofrecer Ayuda a {{name}}",
+        "modalSubtitle": "Nuestra IA ha redactado algunos mensajes para ayudarte a animarlo/a. ¡Elige uno o escribe el tuyo!",
+        "loading": "Generando ánimos...",
+        "customPlaceholder": "O escribe tu propio mensaje...",
+        "sendButton": "Enviar Impulso"
     }
   },
   "settings": {
@@ -130,16 +140,30 @@
       "inviteButton": "Invitar",
       "chatPlaceholder": "Enviar un mensaje...",
       "tabs": {
+          "ripples": "Ecos",
           "chat": "Chat",
           "saga": "Saga",
           "quests": "Misiones"
       },
       "saga": {
           "milestones": "Hitos",
-          "boss": "Desafío Final"
+          "boss": "Desafío Final",
+          "yourCharges": "Tus Cargas de Momentum",
+          "contributeButton": "Contribuir Momentum"
       },
       "questCompletedBy": "Completado por {{name}}",
-      "questCompleteButton": "Completar"
+      "questCompleteButton": "Completar",
+      "huddle": {
+          "title": "Huddle de Squad"
+      },
+      "nameChangeVote": {
+        "title": "Votación de cambio de nombre",
+        "proposedBy": "Propuesto por {{name}}",
+        "votes": "{{count}} / {{required}} votos",
+        "voteButton": "Votar para aprobar",
+        "cancel": "Cancelar",
+        "propose": "Proponer"
+      }
   },
   "upgradeModal": {
       "title": "Desbloquea Momentum Pro",
