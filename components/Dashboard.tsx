@@ -15,6 +15,7 @@ import { WeeklyReview } from './WeeklyReview';
 import { DeleteConfirmation } from './DeleteConfirmation';
 import { OfferAssistModal } from './OfferAssistModal';
 import { DailyDebriefModal } from './DailyDebriefModal';
+import { ProgressAnalysisModal } from './ProgressAnalysisModal';
 import { getTodayDateString, isToday, isYesterday } from '../utils/date';
 import { MOCK_SQUADS, MOCK_TEAMS, MOCK_FINANCIALS, MOCK_QUESTS, MOCK_SAGA, MOCK_CHAT, MOCK_CHALLENGES, MOCK_ASSIST_REQUESTS } from '../App';
 
@@ -48,6 +49,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showSettings, setShowSettings] = useState(false);
   const [showWeeklyReview, setShowWeeklyReview] = useState(false);
   const [showDailyDebrief, setShowDailyDebrief] = useState(false);
+  const [showProgressAnalysis, setShowProgressAnalysis] = useState(false);
   const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null);
   const [habitToEdit, setHabitToEdit] = useState<Habit | null>(null);
   const [assistRequest, setAssistRequest] = useState<AssistRequest | null>(MOCK_ASSIST_REQUESTS.length > 0 ? MOCK_ASSIST_REQUESTS[0] : null);
@@ -217,11 +219,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {mission && <MomentumMissionCard mission={mission} habitTitle={habits.find(h => h.id === mission.targetHabitId)?.title || ''} />}
 
         <div>
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-4 gap-4">
             <h2 className="text-xl font-bold">{t('dashboard.habits.title')}</h2>
-            <button onClick={() => setShowWeeklyReview(true)} className="text-sm font-semibold text-brand-primary hover:underline">
-              {t('dashboard.habits.weeklyReview')}
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowProgressAnalysis(true)} className="text-sm font-semibold text-brand-primary hover:underline flex items-center gap-1">
+                <Icon name="sparkles" className="w-4 h-4" /> {t('dashboard.habits.aiReport')}
+              </button>
+              <button onClick={() => setShowWeeklyReview(true)} className="text-sm font-semibold text-brand-primary hover:underline">
+                {t('dashboard.habits.weeklyReview')}
+              </button>
+            </div>
           </div>
           <div className="space-y-3">
             {sortedHabits.map(habit => (
@@ -269,6 +276,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {showSettings && <SettingsModal user={user} onClose={() => setShowSettings(false)} onUpdateUser={onUpdateUser} onDeleteAccount={onSignOut} onShowPrivacyPolicy={onShowPrivacyPolicy} onShowTermsOfService={onShowTermsOfService} />}
       {showWeeklyReview && <WeeklyReview habits={habits} onClose={() => setShowWeeklyReview(false)} />}
       {showDailyDebrief && <DailyDebriefModal user={user} habits={habits} onClose={() => setShowDailyDebrief(false)} onSave={() => {}} />}
+      {showProgressAnalysis && <ProgressAnalysisModal user={user} habits={habits} onClose={() => setShowProgressAnalysis(false)} />}
       {habitToDelete && <DeleteConfirmation habitTitle={habitToDelete.title} onConfirm={() => { onDeleteHabit(habitToDelete.id); setHabitToDelete(null); }} onCancel={() => setHabitToDelete(null)} />}
       {assistRequest && <OfferAssistModal 
         requesterName={assistRequest.requesterName} 

@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { BlueprintHabit, Habit, RallyPointData } from '../types';
+import { BlueprintHabit, Habit, RallyPointData, User } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -84,6 +84,53 @@ export const generateWeeklyInsight = async (
     return 'An error occurred while generating your insight. Keep up the great work!';
   }
 };
+
+export const generateProgressAnalysisReport = async (
+    user: User,
+    habits: Habit[],
+    language: string
+): Promise<string> => {
+    const habitData = habits.map(h => `
+        - Habit: "${h.title}"
+          - Tied to Identity: ${h.identityTag}
+          - Current Streak: ${h.streak} days
+          - Longest Streak: ${h.longestStreak} days
+          - Total Completions: ${h.completions.length}
+          - Missed Days Recently: ${h.missedDays}
+    `).join('');
+
+    const prompt = `
+        You are an expert performance and habit formation coach named Momentum AI.
+        Analyze the following comprehensive user data to generate an encouraging, insightful, and actionable progress report.
+        The user's name is ${user.name}.
+        Their chosen identities are: ${user.selectedIdentities.map(i => i.name).join(', ')}.
+
+        Here is their habit data:
+        ${habitData}
+
+        Please structure your report in Markdown with the following sections:
+        1.  **Overall Summary:** A brief, motivational overview of their progress and momentum.
+        2.  **Identity Alignment:** Analyze how well their habits support each of their chosen identities. Celebrate successes and strong connections.
+        3.  **Strengths & Keystone Habits:** Identify which habits are strongest (e.g., long streaks, high consistency) and are likely having the most positive impact.
+        4.  **Opportunities for Growth:** Gently point out 1-2 habits they might be struggling with and suggest potential reasons without being critical.
+        5.  **Actionable Recommendations:** Provide 2-3 specific, positive, and easy-to-implement suggestions for the upcoming week to build even more momentum.
+
+        Your tone should be inspiring, data-driven, and supportive, not critical.
+        Respond in the language with this code: ${language}.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model,
+            contents: prompt
+        });
+        return response.text;
+    } catch (error) {
+        console.error('Error generating progress analysis report:', error);
+        return "There was an error generating your analysis. Please check your connection and try again. Remember, you're making great progress!";
+    }
+};
+
 
 export const generateDebriefQuestionsAndWin = async (
     habitsToday: { title: string; completed: boolean }[],

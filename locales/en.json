@@ -66,6 +66,7 @@
     "habits": {
       "title": "Your Habits",
       "weeklyReview": "Weekly Review",
+      "aiReport": "AI Progress Report",
       "add": "Add a new habit"
     },
     "mission": {
@@ -207,5 +208,13 @@
         "subtitle": "Let your squad know you're getting back on track so they can send you some energy."
     },
     "button": "I'm Ready"
+  },
+   "progressAnalysis": {
+    "title": "AI Progress Report",
+    "loading": "Analyzing your progress...",
+    "error": "Could not generate your report at this time.",
+    "formattingNote": "Note: **Bold text** highlights key insights and #, ##, ### denote headings of decreasing importance.",
+    "exportTitle": "Export to PDF",
+    "exportButton": "Export PDF"
   }
 }

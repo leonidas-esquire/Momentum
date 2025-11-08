@@ -66,6 +66,7 @@
     "habits": {
       "title": "Tus Hábitos",
       "weeklyReview": "Revisión Semanal",
+      "aiReport": "Informe de Progreso IA",
       "add": "Añadir un nuevo hábito"
     },
     "mission": {
@@ -207,5 +208,13 @@
         "subtitle": "Hazle saber a tu escuadrón que estás volviendo al buen camino para que puedan enviarte energía."
     },
     "button": "Estoy Listo"
+  },
+  "progressAnalysis": {
+    "title": "Informe de Progreso IA",
+    "loading": "Analizando tu progreso...",
+    "error": "No se pudo generar tu informe en este momento.",
+    "formattingNote": "Nota: El **texto en negrita** resalta ideas clave y #, ##, ### denotan encabezados de importancia decreciente.",
+    "exportTitle": "Exportar a PDF",
+    "exportButton": "Exportar PDF"
   }
 }
