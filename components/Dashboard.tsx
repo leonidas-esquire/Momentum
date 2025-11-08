@@ -241,7 +241,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {showWeeklyReview && <WeeklyReview habits={habits} onClose={() => setShowWeeklyReview(false)} />}
       {showDailyDebrief && <DailyDebriefModal user={user} habits={habits} onClose={() => setShowDailyDebrief(false)} onSave={() => {}} />}
       {habitToDelete && <DeleteConfirmation habitTitle={habitToDelete.title} onConfirm={() => { onDeleteHabit(habitToDelete.id); setHabitToDelete(null); }} onCancel={() => setHabitToDelete(null)} />}
-      {assistRequest && <OfferAssistModal requesterName={assistRequest.requesterName} requesterIdentity={assistRequest.requesterIdentity} habitTitle={assistRequest.habitTitle} onClose={() => setAssistRequest(null)} onSendAssist={() => {}} />}
+      {assistRequest && <OfferAssistModal 
+        requesterName={assistRequest.requesterName} 
+        requesterIdentity={assistRequest.requesterIdentity} 
+        habitTitle={assistRequest.habitTitle} 
+        onClose={() => setAssistRequest(null)} 
+        onSendAssist={(message: string) => {
+            console.log(`Assist message sent to ${assistRequest.requesterName}: "${message}"`);
+            setAssistRequest(null);
+        }} 
+      />}
     </div>
   );
 };
