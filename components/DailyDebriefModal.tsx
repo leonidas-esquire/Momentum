@@ -143,10 +143,10 @@ export const DailyDebriefModal: React.FC<DailyDebriefModalProps> = ({ user, habi
                         className="w-full bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
                     />
                      <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
-                        <button onClick={() => handleSave(false)} className="bg-brand-secondary text-white font-bold py-3 px-6 rounded-full hover:bg-opacity-80">
+                        <button onClick={() => handleSave(false)} className="bg-transparent border-2 border-brand-secondary text-brand-text-muted font-bold py-3 px-6 rounded-full hover:bg-brand-secondary/20 hover:text-brand-text transition-colors duration-300">
                             {t('dailyDebrief.buttonSave')}
                         </button>
-                        <button onClick={() => handleSave(true)} className="bg-brand-primary text-white font-bold py-3 px-6 rounded-full hover:bg-opacity-80 flex items-center justify-center gap-2">
+                        <button onClick={() => handleSave(true)} className="bg-gradient-to-br from-brand-primary to-purple-500 text-white font-bold py-3 px-6 rounded-full hover:opacity-90 transition-opacity duration-300 flex items-center justify-center gap-2 shadow-lg shadow-brand-primary/30">
                            {t('dailyDebrief.buttonShare')} <Icon name="sparkles" className="w-5 h-5"/>
                         </button>
                     </div>

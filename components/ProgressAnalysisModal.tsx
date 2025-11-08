@@ -100,91 +100,169 @@ export const ProgressAnalysisModal: React.FC<ProgressAnalysisModalProps> = ({ us
   }, [user, habits, language]);
 
  const handleExportToPDF = async () => {
+    if (!report) return;
+
     const { jsPDF } = jspdf;
-    const content = reportContentRef.current;
-    if (!content) return;
-
-    // --- PDF Styling Constants ---
-    const BRAND_COLOR = '#8A42D6';
-    const TEXT_COLOR = '#E4E4E6';
-    const BG_COLOR = '#1B1B1F';
-    const Muted_COLOR = '#A0A0B0';
-    const PAGE_MARGIN_X = 20;
-    const PAGE_MARGIN_Y = 25; // Ample vertical margin
-    const HEADER_Y = 15;
-    const FOOTER_Y = 15;
-
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
-    
-    // --- 1. Create Cover Page ---
-    pdf.setFillColor(BG_COLOR);
+
+    // --- PDF Styling Constants ---
+    const BRAND_COLOR = '#8A42D6';
+    const TEXT_COLOR = '#111827'; // Black for white bg
+    const MUTED_COLOR = '#6B7280'; // Gray text
+    const PAGE_MARGIN_X = 20;
+    const PAGE_MARGIN_Y = 25;
+    const MAX_WIDTH = pdfWidth - PAGE_MARGIN_X * 2;
+    const LINE_HEIGHT_MULTIPLIER = 1.4;
+    const HEADER_Y = 15;
+    const FOOTER_Y = 15;
+
+    // --- Cover Page ---
+    pdf.setFillColor(BRAND_COLOR);
     pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
     
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(40);
-    pdf.setTextColor(TEXT_COLOR);
+    pdf.setTextColor('#FFFFFF');
     pdf.text("Momentum", pdfWidth / 2, 80, { align: 'center' });
     
     pdf.setFontSize(20);
-    pdf.setTextColor(BRAND_COLOR);
+    pdf.setTextColor('#E4E4E6');
     pdf.text("AI-Powered Progress Report", pdfWidth / 2, 100, { align: 'center' });
     
-    pdf.setDrawColor(BRAND_COLOR);
+    pdf.setDrawColor('#FFFFFF');
     pdf.setLineWidth(0.5);
     pdf.line(PAGE_MARGIN_X, 130, pdfWidth - PAGE_MARGIN_X, 130);
     
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(14);
-    pdf.setTextColor(Muted_COLOR);
+    pdf.setTextColor('#A0A0B0');
     pdf.text("Prepared for:", PAGE_MARGIN_X, 150);
     
     pdf.setFontSize(18);
-    pdf.setTextColor(TEXT_COLOR);
+    pdf.setTextColor('#FFFFFF');
     pdf.text(user.name, PAGE_MARGIN_X, 160);
     
     pdf.setFontSize(12);
-    pdf.setTextColor(Muted_COLOR);
+    pdf.setTextColor('#A0A0B0');
     pdf.text(`Report Generated: ${new Date().toLocaleDateString()}`, PAGE_MARGIN_X, pdfHeight - 30);
     
-    // --- 2. Use pdf.html() for robust, auto-paginated content ---
-    
-    // Temporarily apply a background color to the container for html2canvas
-    const originalStyle = content.style.cssText;
-    content.style.backgroundColor = BG_COLOR;
-    
-    // Add a new page for the report content to begin
+    // --- Report Content ---
     pdf.addPage();
+    let y = PAGE_MARGIN_Y;
 
-    await pdf.html(content, {
-      callback: (doc: any) => {
-        const pageCount = doc.internal.getNumberOfPages();
-        // Add headers and footers to all pages after the cover page
-        for (let i = 2; i <= pageCount; i++) {
-          doc.setPage(i);
-          doc.setFontSize(10);
-          doc.setTextColor(Muted_COLOR);
-          // Header
-          doc.text("Momentum: The Irresistible Habit App", PAGE_MARGIN_X, HEADER_Y);
-          // Footer
-          doc.text("Your Momentum App - Progress Report", PAGE_MARGIN_X, pdfHeight - FOOTER_Y);
-          doc.text(`Page ${i} of ${pageCount}`, pdfWidth - PAGE_MARGIN_X, pdfHeight - FOOTER_Y, { align: 'right' });
+    const addHeaderAndFooter = (pageNum: number) => {
+        pdf.setFontSize(9);
+        pdf.setTextColor(MUTED_COLOR);
+        pdf.text("Momentum: The Irresistible Habit App", PAGE_MARGIN_X, HEADER_Y);
+        pdf.text("Your Momentum App - Progress Report", PAGE_MARGIN_X, pdfHeight - FOOTER_Y);
+        // Page number will be finalized later
+    };
+    addHeaderAndFooter(2);
+
+    const checkPageBreak = (neededHeight: number) => {
+        if (y + neededHeight > pdfHeight - PAGE_MARGIN_Y) {
+            pdf.addPage();
+            y = PAGE_MARGIN_Y;
+            addHeaderAndFooter(pdf.internal.getNumberOfPages());
         }
+    };
+
+    const lines = report ? report.split('\n') : [];
+    for (const line of lines) {
+        if (line.trim() === '') {
+            y += 5; // Paragraph break
+            checkPageBreak(0);
+            continue;
+        }
+
+        let fontSize = 11;
+        let fontStyle = 'normal';
+        let color = TEXT_COLOR;
+        let text = line;
+        let isList = false;
+        let leftMargin = PAGE_MARGIN_X;
+        let spaceBefore = 2;
         
-        // Revert styles on the original DOM element
-        content.style.cssText = originalStyle;
+        // Simple Markdown parsing
+        if (line.match(/^# /)) {
+            fontSize = 22; fontStyle = 'bold'; text = line.substring(2); spaceBefore = 10;
+        } else if (line.match(/^## /)) {
+            fontSize = 16; fontStyle = 'bold'; text = line.substring(3); spaceBefore = 8;
+        } else if (line.match(/^### /) || line.match(/^\d\.\s/)) {
+            fontSize = 12; fontStyle = 'bold'; color = BRAND_COLOR;
+            text = line.startsWith('###') ? line.substring(4) : line.substring(line.indexOf(' ') + 1);
+            spaceBefore = 6;
+        } else if (line.startsWith('* ') || line.startsWith('- ')) {
+            text = line.substring(2); isList = true; leftMargin += 5; spaceBefore = 1;
+        }
+
+        y += spaceBefore;
+        checkPageBreak(0);
+
+        pdf.setFontSize(fontSize);
+        pdf.setFont('helvetica', fontStyle);
+        pdf.setTextColor(color);
         
-        doc.save(`Momentum_AI_Report_${user.name.replace(/\s/g, '_')}.pdf`);
-      },
-      margin: [PAGE_MARGIN_Y, PAGE_MARGIN_X, PAGE_MARGIN_Y, PAGE_MARGIN_X],
-      autoPaging: 'text', // Use 'text' to avoid splitting lines of text
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: BG_COLOR,
-      },
-    });
+        // Handle inline bolding by splitting and measuring
+        const processAndWrapText = (rawText: string, maxWidth: number) => {
+            const parts = rawText.split(/(\*\*.*?\*\*)/g).filter(p => p);
+            const words: {text: string, isBold: boolean}[] = [];
+            parts.forEach(part => {
+                const isBold = part.startsWith('**');
+                part.replace(/\*\*/g, '').split(' ').forEach(word => {
+                    if(word) words.push({ text: word, isBold });
+                });
+            });
+
+            const lines: { words: {text: string, isBold: boolean}[] }[] = [];
+            let currentLine: { words: {text: string, isBold: boolean}[] } = { words: [] };
+            
+            words.forEach(word => {
+                const currentLineText = [...currentLine.words, word].map(w => w.text).join(' ');
+                const width = pdf.getStringUnitWidth(currentLineText) * fontSize / pdf.internal.scaleFactor;
+                if(width > maxWidth) {
+                    lines.push(currentLine);
+                    currentLine = { words: [word] };
+                } else {
+                    currentLine.words.push(word);
+                }
+            });
+            lines.push(currentLine);
+            return lines;
+        }
+
+        const wrappedLines = processAndWrapText(text, MAX_WIDTH - (isList ? 5 : 0));
+        const neededHeight = wrappedLines.length * fontSize * 0.352777 * LINE_HEIGHT_MULTIPLIER;
+        checkPageBreak(neededHeight);
+
+        if (isList) {
+            pdf.setFillColor(TEXT_COLOR);
+            pdf.circle(PAGE_MARGIN_X + 2, y, 0.8, 'F');
+        }
+
+        wrappedLines.forEach((lineData, index) => {
+            let currentX = leftMargin;
+            lineData.words.forEach(word => {
+                pdf.setFont('helvetica', word.isBold ? 'bold' : 'normal');
+                pdf.text(word.text + ' ', currentX, y);
+                currentX += pdf.getStringUnitWidth(word.text + ' ') * fontSize / pdf.internal.scaleFactor;
+            });
+            y += fontSize * 0.352777 * LINE_HEIGHT_MULTIPLIER;
+            checkPageBreak(0);
+        });
+
+    }
+
+    // Finalize page numbers
+    const totalPages = pdf.internal.getNumberOfPages();
+    for (let i = 2; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.text(`Page ${i} of ${totalPages}`, pdfWidth - PAGE_MARGIN_X, pdfHeight - FOOTER_Y, { align: 'right' });
+    }
+    
+    pdf.save(`Momentum_AI_Report_${user.name.replace(/\s/g, '_')}.pdf`);
   };
 
   return (
