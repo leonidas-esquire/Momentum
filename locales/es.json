@@ -141,5 +141,63 @@
             "target": "Objetivo de Conclusiones Totales",
             "createButton": "Lanzar Desafío"
         }
+    },
+    "onboarding": {
+        "userInfo": {
+            "title": "Vamos a conocerte",
+            "subtitle": "Crea tu cuenta para guardar tu progreso.",
+            "namePlaceholder": "Tu Nombre",
+            "emailPlaceholder": "Tu Correo Electrónico"
+        },
+        "consent": {
+            "prefix": "Al marcar, aceptas nuestra",
+            "privacyPolicy": "Política de Privacidad",
+            "and": "y",
+            "terms": "Términos de Servicio"
+        },
+        "identity": {
+            "title": "Elige Tu Arquetipo Principal",
+            "subtitle": "(Selecciona uno para empezar. Desbloquea más con Pro.)"
+        },
+        "blueprint": {
+            "loadingTitle": "Generando Tus Planos...",
+            "loadingSubtitle": "Nuestra IA está creando tus hábitos iniciales personalizados.",
+            "resultsTitle": "Tu Plano de Momentum",
+            "resultsSubtitle": "Selecciona los hábitos iniciales que quieres adoptar.",
+            "promptTitle": "Inicia Tu Viaje",
+            "promptSubtitle": "Deja que nuestra IA genere un \"Plano de Momentum\" personalizado con hábitos iniciales adaptados a tus nuevas identidades."
+        },
+        "lossFraming": {
+            "header": "Identidad {{current}} de {{total}}: {{name}}",
+            "title": "\"¿Qué perderías si no te convirtieras en esto?\"",
+            "placeholder": "Ej: oportunidades de carrera, conexiones significativas..."
+        },
+        "statement": {
+            "title": "Formula Tus Declaraciones de Identidad"
+        },
+        "buttons": {
+            "next": "Siguiente",
+            "adopt": "Adoptar {{count}} Hábito(s)",
+            "continue": "Continuar",
+            "noThanks": "No, gracias",
+            "generate": "Generar Plano",
+            "finish": "Finalizar Configuración"
+        }
+    },
+    "settings": {
+        "title": "Configuración",
+        "language": "Idioma",
+        "voice": "Preferencia de Voz IA",
+        "privacy": "Privacidad",
+        "viewPolicy": "Ver Política de Privacidad",
+        "deleteAccount": "Eliminar Cuenta",
+        "deleteWarning": "Esto eliminará permanentemente todos tus datos. Esta acción es irreversible.",
+        "deleteButton": "Eliminar Mi Cuenta",
+        "confirmDelete": "Sí, eliminar todo",
+        "cancel": "Cancelar"
+    },
+    "privacyPolicy": {
+        "title": "Política de Privacidad",
+        "close": "Cerrar"
     }
 }

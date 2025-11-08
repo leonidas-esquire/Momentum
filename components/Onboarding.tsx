@@ -8,6 +8,7 @@ import { LanguageContext } from '../contexts/LanguageContext';
 interface OnboardingProps {
   onComplete: (user: User, habits: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields'>[]) => void;
   onTriggerUpgrade: (reason: string) => void;
+  onShowPrivacyPolicy: () => void;
 }
 
 type OnboardingStep = 'welcome' | 'user-info' | 'identity-select' | 'blueprint' | 'loss-framing' | 'statement' | 'complete';
@@ -52,10 +53,11 @@ const BlueprintHabitCard: React.FC<{
 );
 
 
-export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpgrade }) => {
+export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpgrade, onShowPrivacyPolicy }) => {
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [hasConsented, setHasConsented] = useState(false);
   const [selectedIdentities, setSelectedIdentities] = useState<Identity[]>([]);
   const [currentLossFramingIndex, setCurrentLossFramingIndex] = useState(0);
   const [lossFramingAnswers, setLossFramingAnswers] = useState<Record<string, string>>({});
@@ -65,7 +67,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
   const [selectedBlueprintHabits, setSelectedBlueprintHabits] = useState<Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields'>[]>([]);
   const [isLoadingBlueprint, setIsLoadingBlueprint] = useState(false);
   // Fix: Used LanguageContext to get the current language for the API call.
-  const { language } = useContext(LanguageContext)!;
+  const { language, t } = useContext(LanguageContext)!;
 
 
   const handleIdentityToggle = (identity: Identity) => {
@@ -126,13 +128,13 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
       case 'user-info':
         return (
           <div className="text-center animate-fade-in max-w-md mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">Let's get to know you</h2>
-            <p className="text-brand-text-muted mb-8">Create your account to save your progress.</p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">{t('onboarding.userInfo.title')}</h2>
+            <p className="text-brand-text-muted mb-8">{t('onboarding.userInfo.subtitle')}</p>
             <form onSubmit={(e) => { e.preventDefault(); setStep('identity-select'); }} className="space-y-6">
               <div>
                 <input
                   type="text"
-                  placeholder="Your Name"
+                  placeholder={t('onboarding.userInfo.namePlaceholder')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full bg-brand-surface border border-brand-secondary rounded-lg p-4 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
@@ -142,19 +144,35 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
               <div>
                 <input
                   type="email"
-                  placeholder="Your Email"
+                  placeholder={t('onboarding.userInfo.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-brand-surface border border-brand-secondary rounded-lg p-4 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
                   required
                 />
               </div>
+               <div className="flex items-start gap-3 text-left">
+                  <input
+                    id="consent-checkbox"
+                    type="checkbox"
+                    checked={hasConsented}
+                    onChange={(e) => setHasConsented(e.target.checked)}
+                    className="mt-1 h-5 w-5 rounded border-brand-secondary text-brand-primary focus:ring-brand-primary"
+                    required
+                  />
+                  <label htmlFor="consent-checkbox" className="text-sm text-brand-text-muted">
+                    {t('onboarding.consent.prefix')}{' '}
+                    <button type="button" onClick={onShowPrivacyPolicy} className="font-semibold text-brand-primary hover:underline">{t('onboarding.consent.privacyPolicy')}</button>{' '}
+                    {t('onboarding.consent.and')}{' '}
+                     <span className="font-semibold text-brand-primary cursor-pointer hover:underline">{t('onboarding.consent.terms')}</span>.
+                  </label>
+                </div>
               <button 
                 type="submit"
-                disabled={!name.trim() || !email.trim()}
+                disabled={!name.trim() || !email.trim() || !hasConsented}
                 className="w-full bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg disabled:bg-brand-secondary disabled:cursor-not-allowed hover:bg-opacity-80 transition-colors duration-300 flex items-center justify-center gap-2 mx-auto"
               >
-                Next <Icon name="arrow-right" className="w-5 h-5" />
+                {t('onboarding.buttons.next')} <Icon name="arrow-right" className="w-5 h-5" />
               </button>
             </form>
           </div>
@@ -163,8 +181,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
       case 'identity-select':
         return (
           <div className="animate-fade-in">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">Choose Your Primary Archetype</h2>
-            <p className="text-brand-text-muted text-center mb-8">(Select one to start. Unlock more with Pro.)</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">{t('onboarding.identity.title')}</h2>
+            <p className="text-brand-text-muted text-center mb-8">{t('onboarding.identity.subtitle')}</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {IDENTITY_ARCHETYPES.map(identity => (
                 <IdentityCard key={identity.id} identity={identity} isSelected={selectedIdentities.some(i => i.id === identity.id)} onClick={() => handleIdentityToggle(identity)} />
@@ -172,7 +190,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
             </div>
             <div className="text-center mt-8">
                 <button onClick={() => setStep('blueprint')} disabled={selectedIdentities.length === 0} className="bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg disabled:bg-brand-secondary disabled:cursor-not-allowed hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto">
-                    Next <Icon name="arrow-right" className="w-5 h-5" />
+                    {t('onboarding.buttons.next')} <Icon name="arrow-right" className="w-5 h-5" />
                 </button>
             </div>
           </div>
@@ -184,14 +202,14 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
                 {isLoadingBlueprint && (
                     <div className="text-center">
                         <Icon name="sparkles" className="w-12 h-12 text-brand-primary mx-auto animate-pulse" />
-                        <h2 className="text-2xl font-bold mt-4">Generating Your Blueprints...</h2>
-                        <p className="text-brand-text-muted">Our AI is crafting your personalized starter habits.</p>
+                        <h2 className="text-2xl font-bold mt-4">{t('onboarding.blueprint.loadingTitle')}</h2>
+                        <p className="text-brand-text-muted">{t('onboarding.blueprint.loadingSubtitle')}</p>
                     </div>
                 )}
                 {!isLoadingBlueprint && Object.keys(blueprintResults).length > 0 && (
                     <div>
-                        <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">Your Momentum Blueprint</h2>
-                        <p className="text-brand-text-muted text-center mb-8">Select the starter habits you want to adopt.</p>
+                        <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">{t('onboarding.blueprint.resultsTitle')}</h2>
+                        <p className="text-brand-text-muted text-center mb-8">{t('onboarding.blueprint.resultsSubtitle')}</p>
                         <div className="space-y-6">
                             {selectedIdentities.map(identity => (
                                 <div key={identity.id}>
@@ -211,7 +229,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
                         </div>
                         <div className="text-center mt-8">
                             <button onClick={() => setStep('loss-framing')} className="bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto">
-                                {selectedBlueprintHabits.length > 0 ? `Adopt ${selectedBlueprintHabits.length} Habit(s)` : 'Continue'} <Icon name="arrow-right" className="w-5 h-5" />
+                                {selectedBlueprintHabits.length > 0 ? t('onboarding.buttons.adopt', { count: selectedBlueprintHabits.length }) : t('onboarding.buttons.continue')} <Icon name="arrow-right" className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
@@ -219,14 +237,14 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
                 {!isLoadingBlueprint && Object.keys(blueprintResults).length === 0 && (
                      <div className="text-center bg-brand-surface border border-brand-secondary rounded-xl p-8">
                         <Icon name="light-bulb" className="w-12 h-12 mx-auto text-brand-primary mb-4" />
-                        <h2 className="text-2xl font-semibold mb-2">Kickstart Your Journey</h2>
-                        <p className="text-brand-text-muted mb-6">Let our AI generate a personalized "Momentum Blueprint" with starter habits tailored to your new identities.</p>
+                        <h2 className="text-2xl font-semibold mb-2">{t('onboarding.blueprint.promptTitle')}</h2>
+                        <p className="text-brand-text-muted mb-6">{t('onboarding.blueprint.promptSubtitle')}</p>
                         <div className="flex justify-center gap-4">
                              <button onClick={() => setStep('loss-framing')} className="bg-brand-secondary text-white font-bold py-3 px-6 rounded-full text-base hover:bg-opacity-80 transition-colors duration-300">
-                                No, thanks
+                                {t('onboarding.buttons.noThanks')}
                             </button>
                             <button onClick={handleGenerateBlueprints} className="bg-brand-primary text-white font-bold py-3 px-6 rounded-full text-base hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto">
-                                <Icon name="sparkles" className="w-5 h-5"/> Generate Blueprint
+                                <Icon name="sparkles" className="w-5 h-5"/> {t('onboarding.buttons.generate')}
                             </button>
                         </div>
                     </div>
@@ -237,12 +255,12 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
       case 'loss-framing':
         return (
             <div className="text-center animate-slide-in-up">
-                <p className="text-lg text-brand-primary font-semibold mb-2">Identity {currentLossFramingIndex + 1} of {selectedIdentities.length}: {currentIdentity.name}</p>
-                <h2 className="text-2xl md:text-3xl font-bold mb-8">"What would you lose if you didn't become this?"</h2>
+                <p className="text-lg text-brand-primary font-semibold mb-2">{t('onboarding.lossFraming.header', { current: currentLossFramingIndex + 1, total: selectedIdentities.length, name: currentIdentity.name })}</p>
+                <h2 className="text-2xl md:text-3xl font-bold mb-8">{t('onboarding.lossFraming.title')}</h2>
                 <textarea 
                     className="w-full bg-brand-surface border border-brand-secondary rounded-lg p-4 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
                     rows={4}
-                    placeholder="e.g., career opportunities, meaningful connections, personal growth..."
+                    placeholder={t('onboarding.lossFraming.placeholder')}
                     value={lossFramingAnswers[currentIdentity.id] || ''}
                     onChange={(e) => setLossFramingAnswers({...lossFramingAnswers, [currentIdentity.id]: e.target.value})}
                 />
@@ -262,7 +280,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
                     }}
                     className="mt-8 bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto"
                 >
-                    Next <Icon name="arrow-right" className="w-5 h-5" />
+                    {t('onboarding.buttons.next')} <Icon name="arrow-right" className="w-5 h-5" />
                 </button>
             </div>
         );
@@ -270,7 +288,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
       case 'statement':
           return (
               <div className="animate-slide-in-up">
-                  <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Frame Your Identity Statements</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('onboarding.statement.title')}</h2>
                   <div className="space-y-6">
                       {selectedIdentities.map(identity => (
                           <div key={identity.id}>
@@ -286,6 +304,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
                   </div>
                    <button 
                       onClick={() => {
+                          const now = new Date().toISOString();
                           const newUser: User = {
                               id: `user-${Date.now()}`,
                               name,
@@ -301,12 +320,16 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
                               language,
                               subscription: { plan: 'free' },
                               dailyTranslations: { date: '', count: 0 },
+                              consent: {
+                                privacyPolicy: now,
+                                termsOfService: now,
+                              },
                           };
                           onComplete(newUser, selectedBlueprintHabits);
                       }}
                       className="mt-8 bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto"
                   >
-                      Finish Setup <Icon name="check" className="w-5 h-5" />
+                      {t('onboarding.buttons.finish')} <Icon name="check" className="w-5 h-5" />
                   </button>
               </div>
           );

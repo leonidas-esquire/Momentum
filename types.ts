@@ -34,6 +34,10 @@ export interface User {
     date: string;
     count: number;
   };
+  consent: {
+    privacyPolicy: string; // ISO Timestamp
+    termsOfService: string; // ISO Timestamp
+  };
 }
 
 export interface Habit {

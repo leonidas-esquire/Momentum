@@ -13,7 +13,6 @@ import { SquadBuilder } from './SquadBuilder';
 import { MomentumMissionCard } from './MomentumMissionCard';
 import { generateSquadInvitationEmail, generateMembershipPitch } from '../services/geminiService';
 import { LanguageContext } from '../contexts/LanguageContext';
-import { SUPPORTED_LANGUAGES, TTS_VOICES } from '../constants';
 import { TeamHub } from './TeamHub';
 import { TeamAdminDashboard } from './TeamAdminDashboard';
 
@@ -213,6 +212,7 @@ interface DashboardProps {
   onSendChatMessage: (squadId: string, text: string) => void;
   onTriggerUpgrade: (reason: string) => void;
   onCreateTeamChallenge: (challenge: Omit<TeamChallenge, 'id' | 'currentCompletions' | 'isActive'>) => void;
+  onOpenSettings: () => void;
 }
 
 const isToday = (someDate: string | null) => {
@@ -227,7 +227,7 @@ const isToday = (someDate: string | null) => {
 export const Dashboard: React.FC<DashboardProps> = ({ 
   user, habits, squads, ripples, chatMessages, priorityHabitId, mission, teams, teamChallenges, onAddHabit, onCompleteHabit, onDeleteHabit, onUpdateUser, onSetPriorityHabit,
   levelUpInfo, onCloseLevelUpModal, onEvolveHabit, onCreateSquad, onRequestToJoinSquad, onVoteOnJoinRequest, onVoteToKick, onNudge, onCompleteSquadQuest,
-  onSendChatMessage, onTriggerUpgrade, onCreateTeamChallenge
+  onSendChatMessage, onTriggerUpgrade, onCreateTeamChallenge, onOpenSettings
 }) => {
   const [showHabitBuilder, setShowHabitBuilder] = useState(false);
   const [showSquadBuilder, setShowSquadBuilder] = useState(false);
@@ -239,21 +239,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [squadToRequest, setSquadToRequest] = useState<Squad | null>(null);
   const [isAdminView, setIsAdminView] = useState(false);
-  const { language, setLanguage, t } = useContext(LanguageContext)!;
+  const { language, t } = useContext(LanguageContext)!;
 
   const isProUser = user.subscription.plan === 'pro' || user.subscription.plan === 'team';
   const userTeam = useMemo(() => teams.find(t => t.id === user.teamId), [teams, user.teamId]);
-
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newLang = e.target.value;
-    setLanguage(newLang);
-    onUpdateUser({ ...user, language: newLang });
-  };
-  
-  const handleVoiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newVoice = e.target.value;
-    onUpdateUser({ ...user, voicePreference: newVoice });
-  };
 
   const firstName = user.name.split(' ')[0];
   const formattedDate = new Intl.DateTimeFormat(language, { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
@@ -345,34 +334,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <p className="text-brand-text-muted">{formattedDate}</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-             <select
-                value={language}
-                onChange={handleLanguageChange}
-                className="bg-brand-surface border border-brand-secondary text-brand-text font-semibold py-2 px-3 rounded-full text-sm hover:bg-brand-secondary transition-colors duration-300 appearance-none"
-                aria-label="Select language"
-             >
-                {SUPPORTED_LANGUAGES.map(lang => (
-                    <option key={lang.code} value={lang.code}>{lang.name.split('(')[0].trim()}</option>
-                ))}
-            </select>
-             <select
-                value={user.voicePreference || TTS_VOICES[0].name}
-                onChange={handleVoiceChange}
-                className="bg-brand-surface border border-brand-secondary text-brand-text font-semibold py-2 px-3 rounded-full text-sm hover:bg-brand-secondary transition-colors duration-300 appearance-none"
-                aria-label="Select voice"
-             >
-                {TTS_VOICES.map(voice => (
-                    <option key={voice.name} value={voice.name}>{voice.name} ({voice.gender})</option>
-                ))}
-            </select>
-            {user.isAdmin && userTeam && (
-                <button 
-                    onClick={() => setIsAdminView(v => !v)}
-                    className="bg-brand-surface border border-brand-secondary text-brand-primary font-bold py-2 px-4 rounded-full text-sm hover:bg-brand-secondary transition-colors duration-300 flex items-center gap-2"
-                >
-                    <Icon name={isAdminView ? "users" : "shield"} className="w-4 h-4" /> {isAdminView ? 'My Dashboard' : 'Team Admin'}
-                </button>
-            )}
             <button 
                 onClick={() => setShowWeeklyReview(true)}
                 className="bg-brand-surface border border-brand-secondary text-brand-text font-semibold py-2 px-4 rounded-full text-sm hover:bg-brand-secondary transition-colors duration-300"
@@ -387,6 +348,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <Icon name="sparkles" className="w-4 h-4" /> {t('dashboard.header.upgrade')}
                 </button>
             )}
+            {user.isAdmin && userTeam && (
+                <button 
+                    onClick={() => setIsAdminView(v => !v)}
+                    className="bg-brand-surface border border-brand-secondary text-brand-primary font-bold py-2 px-4 rounded-full text-sm hover:bg-brand-secondary transition-colors duration-300 flex items-center gap-2"
+                >
+                    <Icon name={isAdminView ? "users" : "shield"} className="w-4 h-4" /> {isAdminView ? 'My Dashboard' : 'Team Admin'}
+                </button>
+            )}
+             <button 
+                onClick={onOpenSettings}
+                className="bg-brand-surface border border-brand-secondary text-brand-text-muted font-semibold p-2.5 rounded-full text-sm hover:bg-brand-secondary hover:text-white transition-colors duration-300"
+                aria-label={t('settings.title')}
+            >
+                <Icon name="cog" className="w-5 h-5" />
+            </button>
           </div>
         </header>
         

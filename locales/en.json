@@ -141,5 +141,63 @@
             "target": "Target Total Completions",
             "createButton": "Launch Challenge"
         }
+    },
+    "onboarding": {
+        "userInfo": {
+            "title": "Let's get to know you",
+            "subtitle": "Create your account to save your progress.",
+            "namePlaceholder": "Your Name",
+            "emailPlaceholder": "Your Email"
+        },
+        "consent": {
+            "prefix": "By checking, you agree to our",
+            "privacyPolicy": "Privacy Policy",
+            "and": "and",
+            "terms": "Terms of Service"
+        },
+        "identity": {
+            "title": "Choose Your Primary Archetype",
+            "subtitle": "(Select one to start. Unlock more with Pro.)"
+        },
+        "blueprint": {
+            "loadingTitle": "Generating Your Blueprints...",
+            "loadingSubtitle": "Our AI is crafting your personalized starter habits.",
+            "resultsTitle": "Your Momentum Blueprint",
+            "resultsSubtitle": "Select the starter habits you want to adopt.",
+            "promptTitle": "Kickstart Your Journey",
+            "promptSubtitle": "Let our AI generate a personalized \"Momentum Blueprint\" with starter habits tailored to your new identities."
+        },
+        "lossFraming": {
+            "header": "Identity {{current}} of {{total}}: {{name}}",
+            "title": "\"What would you lose if you didn't become this?\"",
+            "placeholder": "e.g., career opportunities, meaningful connections..."
+        },
+        "statement": {
+            "title": "Frame Your Identity Statements"
+        },
+        "buttons": {
+            "next": "Next",
+            "adopt": "Adopt {{count}} Habit(s)",
+            "continue": "Continue",
+            "noThanks": "No, thanks",
+            "generate": "Generate Blueprint",
+            "finish": "Finish Setup"
+        }
+    },
+    "settings": {
+        "title": "Settings",
+        "language": "Language",
+        "voice": "AI Voice Preference",
+        "privacy": "Privacy",
+        "viewPolicy": "View Privacy Policy",
+        "deleteAccount": "Delete Account",
+        "deleteWarning": "This will permanently delete all your data. This action is irreversible.",
+        "deleteButton": "Delete My Account",
+        "confirmDelete": "Yes, delete everything",
+        "cancel": "Cancel"
+    },
+    "privacyPolicy": {
+        "title": "Privacy Policy",
+        "close": "Close"
     }
 }

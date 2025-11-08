@@ -9,6 +9,9 @@ import { Icon } from './components/Icon';
 import { LanguageContext } from './contexts/LanguageContext';
 import { Chatbot } from './components/Chatbot';
 import { UpgradeModal } from './components/UpgradeModal';
+import { SettingsModal } from './components/SettingsModal';
+import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
+
 
 const initialSquads: Squad[] = [
   { id: 'squad-1', name: 'Momentum Mavericks', goalIdentity: 'Achiever', members: ['Leo', 'Mia', 'Zoe'], sharedMomentum: 15432, pendingRequests: [], activeKickVotes: [] },
@@ -60,6 +63,10 @@ const App: React.FC = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState<string>('');
   
+  // GDPR and Settings state
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showPrivacyPolicyModal, setShowPrivacyPolicyModal] = useState(false);
+
   // B2B State
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamChallenges, setTeamChallenges] = useState<TeamChallenge[]>([]);
@@ -115,20 +122,26 @@ const App: React.FC = () => {
       
       if (storedUser) {
         let parsedUser: User = JSON.parse(storedUser);
-        if (!parsedUser.id) parsedUser.id = 'user-123'; // Assign ID for demo purposes
-        if (!parsedUser.language) parsedUser.language = 'en';
-        if (!parsedUser.subscription) parsedUser.subscription = { plan: 'free' };
-        if (!parsedUser.dailyTranslations) parsedUser.dailyTranslations = { date: '', count: 0 };
-
-        // If user is on a team, they get pro features.
-        const userTeam = storedTeams ? (JSON.parse(storedTeams) as Team[]).find(t => t.id === parsedUser.teamId) : null;
-        if (userTeam && userTeam.subscriptionStatus === 'active') {
-            parsedUser.subscription.plan = 'team';
-        }
-
-        setUser(parsedUser);
-        if (parsedUser.language) {
-            setLanguage(parsedUser.language);
+        if (!parsedUser.consent) {
+          // If a legacy user exists without consent, log them out to force re-consent.
+          setUser(null);
+          localStorage.clear();
+        } else {
+            if (!parsedUser.id) parsedUser.id = 'user-123'; // Assign ID for demo purposes
+            if (!parsedUser.language) parsedUser.language = 'en';
+            if (!parsedUser.subscription) parsedUser.subscription = { plan: 'free' };
+            if (!parsedUser.dailyTranslations) parsedUser.dailyTranslations = { date: '', count: 0 };
+    
+            // If user is on a team, they get pro features.
+            const userTeam = storedTeams ? (JSON.parse(storedTeams) as Team[]).find(t => t.id === parsedUser.teamId) : null;
+            if (userTeam && userTeam.subscriptionStatus === 'active') {
+                parsedUser.subscription.plan = 'team';
+            }
+    
+            setUser(parsedUser);
+            if (parsedUser.language) {
+                setLanguage(parsedUser.language);
+            }
         }
       }
       if (storedHabits) setHabits(JSON.parse(storedHabits));
@@ -814,6 +827,21 @@ const App: React.FC = () => {
     addToast("New Team Challenge created!", 'success');
   };
 
+  const handleDeleteAccount = () => {
+    setUser(null);
+    setHabits([]);
+    setSquads(initialSquads);
+    setRipples([]);
+    setChatMessages([]);
+    setMission(null);
+    setPriorityHabitId(null);
+    setTeams([]);
+    setTeamChallenges([]);
+    localStorage.clear();
+    setShowSettingsModal(false);
+    addToast("Your account and all data have been permanently deleted.", "success");
+  };
+
 
   if (!isLoaded) return <div className="min-h-screen bg-brand-bg flex items-center justify-center"><p>Loading...</p></div>;
   if (isGeneratingHuddle && !dailyHuddleData) {
@@ -859,6 +887,7 @@ const App: React.FC = () => {
                 onSendChatMessage={handleSendChatMessage}
                 onTriggerUpgrade={triggerUpgradeModal}
                 onCreateTeamChallenge={handleCreateTeamChallenge}
+                onOpenSettings={() => setShowSettingsModal(true)}
             />
             {showDailyHuddle && dailyHuddleData && user && (
                 <Chatbot 
@@ -875,6 +904,7 @@ const App: React.FC = () => {
         <Onboarding 
             onComplete={handleOnboardingComplete} 
             onTriggerUpgrade={triggerUpgradeModal}
+            onShowPrivacyPolicy={() => setShowPrivacyPolicyModal(true)}
         />
       )}
       <div className="fixed top-4 right-4 z-[100] w-full max-w-sm">
@@ -888,6 +918,18 @@ const App: React.FC = () => {
             onClose={() => setShowUpgradeModal(false)}
             onUpgrade={handleSimulateUpgrade}
         />
+       )}
+       {showSettingsModal && user && (
+            <SettingsModal
+                user={user}
+                onClose={() => setShowSettingsModal(false)}
+                onUpdateUser={handleUpdateUser}
+                onDeleteAccount={handleDeleteAccount}
+                onShowPrivacyPolicy={() => setShowPrivacyPolicyModal(true)}
+            />
+       )}
+       {showPrivacyPolicyModal && (
+            <PrivacyPolicyModal onClose={() => setShowPrivacyPolicyModal(false)} />
        )}
     </>
   );
