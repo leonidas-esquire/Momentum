@@ -1,12 +1,11 @@
 import React, { useState, useMemo, useEffect, useContext } from 'react';
-import { User, Habit, UserIdentity, Squad, Ripple, Mission, DailyHuddleData, ChatMessage, Team, TeamChallenge, Financials, MentorIntervention } from '../types';
+import { User, Habit, UserIdentity, Squad, Ripple, Mission, DailyHuddleData, ChatMessage, Team, TeamChallenge, Financials, MentorIntervention, ChapterUnlockData } from '../types';
 import { HabitCard } from './HabitCard';
 import { HabitBuilder } from './HabitBuilder';
 import { WeeklyReview } from './WeeklyReview';
 import { DeleteConfirmation } from './DeleteConfirmation';
 import { Icon } from './Icon';
 import { IdentityStatus } from './IdentityStatus';
-import { LevelUpModal } from './LevelUpModal';
 import { Chatbot } from './Chatbot';
 import { SquadHub } from './SquadHub';
 import { SquadBuilder } from './SquadBuilder';
@@ -18,6 +17,7 @@ import { TeamAdminDashboard } from './TeamAdminDashboard';
 import { FinancialsWidget } from './FinancialsWidget';
 import { MomentumMentorWidget } from './MomentumMentorWidget';
 import { isToday } from '../utils/date';
+import { ChapterUnlockModal } from './ChapterUnlockModal';
 
 interface InviteModalProps {
   user: User;
@@ -200,14 +200,15 @@ interface DashboardProps {
   financials: Financials;
   allUsers: User[];
   mentorIntervention: MentorIntervention | null;
+  chapterUnlockData: ChapterUnlockData | null;
   onAddHabit: (newHabit: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions'>) => void;
   onCompleteHabit: (habitId: string) => void;
   onDeleteHabit: (habitId: string) => void;
   onUpdateUser: (user: User) => void;
   onSetPriorityHabit: (habitId: string) => void;
-  levelUpInfo: { identity: UserIdentity; habit: Habit } | null;
-  onCloseLevelUpModal: () => void;
-  onEvolveHabit: (habitId: string, newTitle: string) => void;
+  onCloseChapterUnlockModal: () => void;
+  onAcceptMasteryMission: (missionData: ChapterUnlockData['masteryMission']) => void;
+  onAdoptEvolvedHabit: (newTitle: string) => void;
   onCreateSquad: (name: string, goalIdentity: string) => void;
   onRequestToJoinSquad: (squadId: string, pitch: string) => void;
   onVoteOnJoinRequest: (squadId: string, requestUserName: string, vote: 'approve' | 'deny') => void;
@@ -225,9 +226,9 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
-  user, habits, squads, ripples, chatMessages, priorityHabitId, mission, teams, teamChallenges, financials, allUsers, mentorIntervention,
+  user, habits, squads, ripples, chatMessages, priorityHabitId, mission, teams, teamChallenges, financials, allUsers, mentorIntervention, chapterUnlockData,
   onAddHabit, onCompleteHabit, onDeleteHabit, onUpdateUser, onSetPriorityHabit,
-  levelUpInfo, onCloseLevelUpModal, onEvolveHabit, onCreateSquad, onRequestToJoinSquad, onVoteOnJoinRequest, onVoteToKick, onNudge, onCompleteSquadQuest,
+  onCloseChapterUnlockModal, onAcceptMasteryMission, onAdoptEvolvedHabit, onCreateSquad, onRequestToJoinSquad, onVoteOnJoinRequest, onVoteToKick, onNudge, onCompleteSquadQuest,
   onSendChatMessage, onTriggerUpgrade, onCreateTeamChallenge, onOpenSettings, onOpenDailyDebrief, onAcceptMicroHabit, onDismissMentor
 }) => {
   const [showHabitBuilder, setShowHabitBuilder] = useState(false);
@@ -524,7 +525,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {showSquadBuilder && <SquadBuilder user={user} onCreateSquad={onCreateSquad} onClose={() => setShowSquadBuilder(false)} />}
       {showWeeklyReview && <WeeklyReview habits={habits} onClose={() => setShowWeeklyReview(false)} />}
       {habitToDelete && <DeleteConfirmation habitTitle={habitToDelete.title} onConfirm={handleConfirmDelete} onCancel={handleCancelDelete} />}
-      {levelUpInfo && <LevelUpModal identity={levelUpInfo.identity} habitToEvolve={levelUpInfo.habit} onEvolve={onEvolveHabit} onClose={onCloseLevelUpModal} />}
+      {chapterUnlockData && (
+        <ChapterUnlockModal 
+            data={chapterUnlockData}
+            onClose={onCloseChapterUnlockModal}
+            onAcceptMission={onAcceptMasteryMission}
+            onAdoptHabit={onAdoptEvolvedHabit}
+        />
+      )}
       {isChatbotOpen && <Chatbot user={user} habits={habits} onClose={() => setIsChatbotOpen(false)} />}
       
       {showInviteModal && currentUserSquad && (

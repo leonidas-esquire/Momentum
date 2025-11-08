@@ -1,237 +1,211 @@
 {
-    "dashboard": {
-        "header": {
-            "title": "Hello, {{name}}",
-            "weeklyReview": "Weekly Review",
-            "upgrade": "Upgrade to Pro"
-        },
-        "mission": {
-            "title": "This Week's Momentum Mission",
-            "targetHabit": "Target Habit: \"{{habitTitle}}\"",
-            "completions": "Completions"
-        },
-        "identity": {
-            "title": "Identity Progress"
-        },
-        "squadHub": {
-            "title": "Amplify Your Momentum",
-            "noSquadMessage": "Building habits is easier with a team. Create or join a squad to stay accountable and celebrate wins together.",
-            "suggestedSquads": "Suggested Squads For You",
-            "or": "or",
-            "formSquad": "Form Your Own Squad"
-        },
-        "empty": {
-            "title": "Your journey starts here.",
-            "message": "Create your first routine to start building your new identity.",
-            "button": "Create Routine"
-        },
-        "focus": {
-            "title": "Today's Focus"
-        },
-        "time": {
-            "morning": "Morning",
-            "afternoon": "Afternoon",
-            "evening": "Evening"
-        },
-        "mentorWidget": {
-            "title": "Momentum Mentor",
-            "acceptButton": "Do Micro-Habit",
-            "dismissButton": "I'll do it"
-        }
+  "onboarding": {
+    "userInfo": {
+      "title": "Tell Us About Yourself",
+      "subtitle": "This helps us personalize your journey.",
+      "namePlaceholder": "Your Name",
+      "emailPlaceholder": "Your Email"
     },
-    "habitBuilder": {
-        "title": "Create New Routine",
-        "question1": "1. What's the simplest version of this action?",
-        "placeholder1": "e.g., Meditate for 5 minutes",
-        "placeholder2": "Description (optional, e.g., using Headspace)",
-        "question2": "2. Which identity does this reinforce?",
-        "question3": "3. When does this happen naturally in your day? (The Cue)",
-        "cueMorning": "In the morning",
-        "cueWorkout": "After my workout",
-        "cueLunch": "During my lunch break",
-        "cueBed": "Before bed",
-        "button": "Add Routine"
+    "consent": {
+      "prefix": "I agree to the",
+      "privacyPolicy": "Privacy Policy",
+      "and": "and",
+      "terms": "Terms of Service"
     },
-    "squadHub": {
-        "joinFull": "Full",
-        "joinRequest": "Request to Join",
-        "pendingRequests": "Pending Join Requests ({{count}})",
-        "wantsToJoin": "{{name}} wants to join",
-        "approvals": "{{count}} / 2 approvals",
-        "deny": "Deny",
-        "approve": "Approve",
-        "approveDisabled": "Cannot approve, squad is full.",
-        "kickVote": "Kick Vote: {{voters}}/{{required}}",
-        "voteToRemove": "Vote to remove",
-        "voteToKick": "Vote to Kick",
-        "you": "(You)",
-        "tabActivity": "Activity Ripple",
-        "tabChat": "Chat",
-        "tabWins": "Wins",
-        "tabQuests": "Quests",
-        "tabLeaderboard": "Leaderboard",
-        "tabMembers": "Members ({{count}})",
-        "noRipples": "Complete a habit to start the ripple!",
-        "aiCoachTitle": "AI Squad Coach",
-        "aiCoachLoading": "Analyzing squad energy...",
-        "aiCoachButton": "Get Squad Insight",
-        "leaderboardTitle": "Top 10 Global Squad Rankings",
-        "membersTitle": "Squad Members",
-        "sharedMomentum": "Shared Momentum",
-        "invite": "Invite",
-        "questsTitle": "Today's Squad Quests",
-        "questsLoading": "Generating today's quests...",
-        "questCompleteButton": "Complete Quest",
-        "questCompletedBy": "Completed by {{name}}",
-        "chatPlaceholder": "Type a message...",
-        "chatSend": "Send",
-        "noMessages": "No messages yet. Be the first to say hi!",
-        "chatTranslating": "Translating...",
-        "chatShowOriginal": "Show original",
-        "chatShowTranslation": "Show translation",
-        "chatTranslationLimit": "Daily translation limit reached.",
-        "upgrade": "Upgrade",
-        "winsTitle": "Shared Wins & Reflections",
-        "noWins": "Share a debrief to start celebrating wins together!"
+    "buttons": {
+      "next": "Next",
+      "adopt": "Adopt {{count}} Habits",
+      "continue": "Continue",
+      "noThanks": "No, thanks",
+      "generate": "Generate Blueprint",
+      "finish": "Finish & Start Journey"
     },
-    "dailyHuddle": {
-        "oneThing": "Your One Thing Today",
-        "energyQuestion": "How's your energy today?",
-        "energyLow": "Low",
-        "energyMedium": "Medium",
-        "energyHigh": "High",
-        "energyTip": "Select 'Low' and we'll help you adapt your goal to keep momentum."
+    "identity": {
+      "title": "Choose Your Identity",
+      "subtitle": "Select one archetype you want to embody. (Upgrade for more!)"
     },
-    "upgradeModal": {
-        "title": "Upgrade to Momentum Pro",
-        "reason": {
-            "habit": "You've reached the 3-habit limit for the free plan.",
-            "identity": "Unlock the ability to cultivate multiple identities at once.",
-            "translation": "Break the language barrier with unlimited translations."
-        },
-        "feature1": "Unlimited Habits",
-        "feature1Desc": "Create and track as many routines as you need.",
-        "feature2": "Multiple Identities",
-        "feature2Desc": "Simultaneously develop up to 3 identities.",
-        "feature3": "Unlimited Chat Translations",
-        "feature3Desc": "Communicate seamlessly with your global squad.",
-        "feature4": "Monthly Momentum Shields",
-        "feature4Desc": "Protect your most important streaks automatically.",
-        "cta": "Unlock Pro Now",
-        "close": "Maybe Later"
+    "blueprint": {
+      "loadingTitle": "Crafting Your Blueprint...",
+      "loadingSubtitle": "Our AI is designing personalized habits just for you.",
+      "resultsTitle": "Your Identity Blueprint",
+      "resultsSubtitle": "Select the habits you want to adopt. These are just suggestions!",
+      "promptTitle": "AI-Powered Habit Blueprint",
+      "promptSubtitle": "Want some AI-generated suggestions to kickstart your journey?"
     },
-    "teamHub": {
-        "title": "Team Hub",
-        "challengeTitle": "Active Team Challenge",
-        "leaderboardTitle": "Team Leaderboard",
-        "rank": "Rank",
-        "member": "Member",
-        "completions": "Completions"
+    "lossFraming": {
+      "header": "Step {{current}} of {{total}}: The {{name}}",
+      "title": "What's the cost of inaction?",
+      "placeholder": "e.g., \"If I don't become a Creator, I'll never finish my book and will always regret it...\""
     },
-    "adminDashboard": {
-        "title": "Team Admin Dashboard",
-        "statsTitle": "Team Analytics (Privacy-First)",
-        "totalMembers": "Total Members",
-        "activeMembers": "Active Members (Last 7 Days)",
-        "completionRate": "Avg. Completion Rate",
-        "membersTitle": "Manage Members",
-        "inviteMember": "Invite New Member",
-        "remove": "Remove",
-        "challengesTitle": "Manage Team Challenges",
-        "createChallenge": "Create New Challenge",
-        "challengeForm": {
-            "title": "Challenge Title",
-            "titlePlaceholder": "e.g., Q4 Wellness Initiative",
-            "description": "Description",
-            "descriptionPlaceholder": "A short, motivating description for the team.",
-            "habitCategory": "Habit Category",
-            "habitCategoryPlaceholder": "e.g., Mindfulness, Exercise, Reading",
-            "target": "Target Total Completions",
-            "createButton": "Launch Challenge"
-        }
-    },
-    "onboarding": {
-        "userInfo": {
-            "title": "Let's get to know you",
-            "subtitle": "Create your account to save your progress.",
-            "namePlaceholder": "Your Name",
-            "emailPlaceholder": "Your Email"
-        },
-        "consent": {
-            "prefix": "By checking, you agree to our",
-            "privacyPolicy": "Privacy Policy",
-            "and": "and",
-            "terms": "Terms of Service"
-        },
-        "identity": {
-            "title": "Choose Your Primary Archetype",
-            "subtitle": "(Select one to start. Unlock more with Pro.)"
-        },
-        "blueprint": {
-            "loadingTitle": "Generating Your Blueprints...",
-            "loadingSubtitle": "Our AI is crafting your personalized starter habits.",
-            "resultsTitle": "Your Momentum Blueprint",
-            "resultsSubtitle": "Select the starter habits you want to adopt.",
-            "promptTitle": "Kickstart Your Journey",
-            "promptSubtitle": "Let our AI generate a personalized \"Momentum Blueprint\" with starter habits tailored to your new identities."
-        },
-        "lossFraming": {
-            "header": "Identity {{current}} of {{total}}: {{name}}",
-            "title": "\"What would you lose if you didn't become this?\"",
-            "placeholder": "e.g., career opportunities, meaningful connections..."
-        },
-        "statement": {
-            "title": "Frame Your Identity Statements"
-        },
-        "buttons": {
-            "next": "Next",
-            "adopt": "Adopt {{count}} Habit(s)",
-            "continue": "Continue",
-            "noThanks": "No, thanks",
-            "generate": "Generate Blueprint",
-            "finish": "Finish Setup"
-        }
-    },
-    "settings": {
-        "title": "Settings",
-        "language": "Language",
-        "voice": "AI Voice Preference",
-        "privacy": "Privacy",
-        "viewPolicy": "View Privacy Policy",
-        "deleteAccount": "Delete Account",
-        "deleteWarning": "This will permanently delete all your data. This action is irreversible.",
-        "deleteButton": "Delete My Account",
-        "confirmDelete": "Yes, delete everything",
-        "cancel": "Cancel"
-    },
-    "privacyPolicy": {
-        "title": "Privacy Policy",
-        "close": "Close"
-    },
-    "dailyDebrief": {
-        "promptTitle": "Time for your Daily Debrief",
-        "promptSubtitle": "Take a moment to reflect on your day's journey.",
-        "promptButton": "Start Debrief",
-        "title": "Daily Debrief",
-        "step1Title": "How was your day, really?",
-        "step2Title": "Let's dig a little deeper...",
-        "step3Title": "Add a private note (optional)",
-        "step3Placeholder": "Your thoughts, for your eyes only...",
-        "step4Title": "Share a win with your squad?",
-        "step4Subtitle": "Here's an AI-drafted summary of your reflection. Feel free to edit it before sharing.",
-        "loading": "AI is generating your reflection points...",
-        "buttonNext": "Next",
-        "buttonSave": "Save Debrief",
-        "buttonShare": "Save & Share Win"
-    },
-    "financialsWidget": {
-        "title": "Platform Financials (Simulated)",
-        "revenue": "Monthly Revenue",
-        "costs": "Monthly Costs",
-        "net": "Net P/L",
-        "profitabilityGoal": "Progress to Profitability",
-        "profitable": "Profitable",
-        "loss": "Operating at a Loss",
-        "breakEven": "Breaking Even"
+    "statement": {
+      "title": "Craft Your Identity Statements"
     }
+  },
+  "habitBuilder": {
+    "title": "Build a New Habit",
+    "question1": "What do you want to do consistently?",
+    "placeholder1": "e.g., Write for 15 minutes",
+    "placeholder2": "Description (optional)",
+    "question2": "Which identity does this reinforce?",
+    "question3": "When will you do it? (The Cue)",
+    "cueMorning": "In the morning",
+    "cueWorkout": "After my workout",
+    "cueLunch": "During my lunch break",
+    "cueBed": "Before bed",
+    "button": "Add Habit"
+  },
+  "dashboard": {
+    "header": {
+      "title": "Welcome, {{name}}",
+      "weeklyReview": "Weekly Review",
+      "upgrade": "Upgrade to Pro"
+    },
+    "identity": {
+      "title": "Your Identities"
+    },
+    "empty": {
+      "title": "Your canvas is clear.",
+      "message": "It's time to build the first habit of your new identity.",
+      "button": "Create First Habit"
+    },
+    "focus": {
+      "title": "Today's Focus"
+    },
+    "time": {
+      "morning": "Morning",
+      "afternoon": "Afternoon",
+      "evening": "Evening"
+    },
+    "mission": {
+      "title": "Momentum Mission",
+      "targetHabit": "Target Habit: {{habitTitle}}",
+      "completions": "Completions"
+    },
+    "mentorWidget": {
+        "title": "Momentum Mentor",
+        "acceptButton": "Let's try it!",
+        "dismissButton": "No, thanks"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "voice": "AI Voice Preference",
+    "privacy": "Privacy",
+    "viewPolicy": "View Privacy Policy",
+    "deleteAccount": "Danger Zone",
+    "deleteWarning": "This will permanently delete your account and all data. This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirmDelete": "Yes, I'm sure",
+    "deleteButton": "Delete My Account"
+  },
+  "dailyDebrief": {
+    "title": "Daily Debrief",
+    "promptTitle": "Time for your Daily Debrief!",
+    "promptSubtitle": "Take a moment to reflect on your day and solidify your wins.",
+    "promptButton": "Start Debrief",
+    "step1Title": "First, how was your day overall?",
+    "step2Title": "Let's reflect a bit deeper...",
+    "loading": "Generating thoughtful questions...",
+    "buttonNext": "Next",
+    "step3Title": "Any private thoughts?",
+    "step3Placeholder": "This is just for you. No one else will see this.",
+    "step4Title": "Share a Win with Your Squad?",
+    "step4Subtitle": "Your AI drafted this based on your day. Feel free to edit it!",
+    "buttonSave": "Save Privately",
+    "buttonShare": "Save & Share Win"
+  },
+  "dailyHuddle": {
+      "oneThing": "Your One Thing for Today"
+  },
+  "squadHub": {
+      "upgradeTitle": "Unlock Your Squad",
+      "upgradeMessage": "Join forces with others to build momentum together. Squads are a Pro feature.",
+      "upgradeButton": "Go Pro & Form a Squad",
+      "noSquadTitle": "Unite Your Momentum",
+      "noSquadMessage": "Create or join a squad to hold each other accountable and achieve your shared identity goals together.",
+      "createButton": "Create a Squad",
+      "joinButton": "Join a Squad",
+      "suggestionsTitle": "Suggested Squads",
+      "inviteButton": "Invite",
+      "chatPlaceholder": "Send a message...",
+      "tabs": {
+          "chat": "Chat",
+          "saga": "Saga",
+          "quests": "Quests"
+      },
+      "saga": {
+          "milestones": "Milestones",
+          "boss": "Final Challenge"
+      },
+      "questCompletedBy": "Completed by {{name}}",
+      "questCompleteButton": "Complete"
+  },
+  "upgradeModal": {
+      "title": "Unlock Momentum Pro",
+      "reason": {
+          "habit": "The free plan is limited to 5 habits.",
+          "identity": "The free plan is limited to 1 identity.",
+          "translation": "AI features have a daily limit on the free plan."
+      },
+      "feature1": "Unlimited Habits & Identities",
+      "feature1Desc": "Embody multiple facets of who you're becoming.",
+      "feature2": "Accountability Squads",
+      "feature2Desc": "Join forces with others for shared momentum.",
+      "feature3": "Advanced AI Features",
+      "feature3Desc": "Unlock voice interactions and unlimited translations.",
+      "feature4": "Momentum Shields",
+      "feature4Desc": "Protect your hard-earned streaks on days you miss.",
+      "cta": "Upgrade Now - $9.99/month",
+      "close": "Maybe Later"
+  },
+  "teamHub": {
+      "title": "Team Hub",
+      "challengeTitle": "Active Challenge",
+      "leaderboardTitle": "Leaderboard",
+      "rank": "Rank",
+      "member": "Member",
+      "completions": "Completions"
+  },
+  "adminDashboard": {
+      "statsTitle": "Team Performance",
+      "totalMembers": "Total Members",
+      "activeMembers": "Active Last 7 Days",
+      "completionRate": "Avg. Completion Rate",
+      "membersTitle": "Manage Members",
+      "remove": "Remove",
+      "inviteMember": "Invite New Member",
+      "challengesTitle": "Manage Challenges",
+      "challengeForm": {
+          "titlePlaceholder": "Challenge Title",
+          "descriptionPlaceholder": "Description (optional)",
+          "habitCategoryPlaceholder": "e.g., 'Writing', 'Fitness'",
+          "target": "Target Completions",
+          "createButton": "Create Challenge"
+      }
+  },
+  "privacyPolicy": {
+      "title": "Privacy Policy",
+      "close": "Close"
+  },
+  "financialsWidget": {
+      "title": "Business Dashboard",
+      "revenue": "Monthly Revenue",
+      "costs": "Monthly Costs",
+      "net": "Net Profit/Loss",
+      "profitabilityGoal": "Progress to Profitability",
+      "loss": "Loss",
+      "profitable": "Profitable",
+      "breakEven": "Break-Even"
+  },
+  "chapterUnlock": {
+      "title": "Chapter Unlock!",
+      "subtitle": "You've reached Level {{newLevel}} as a {{identityName}}!",
+      "loreTitle": "The Story So Far...",
+      "missionTitle": "New Mastery Mission",
+      "missionAccepted": "Mission Accepted!",
+      "missionAccept": "Accept Mission",
+      "evolveTitle": "Evolve Your Habit",
+      "continueButton": "Continue Your Journey"
+  }
 }

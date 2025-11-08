@@ -1,5 +1,3 @@
-// Fix: Removed circular self-import that caused a declaration conflict.
-
 export interface Identity {
   id: string;
   name: string;
@@ -12,43 +10,6 @@ export interface UserIdentity extends Identity {
   xp: number;
 }
 
-export interface DailyDebrief {
-    date: string; // ISO date string (YYYY-MM-DD)
-    mood: 'terrible' | 'bad' | 'okay' | 'good' | 'great';
-    guidedAnswers: Record<string, string>;
-    privateNote: string;
-    isShared: boolean;
-}
-
-export interface User {
-  id: string; // Added user ID for team admin reference
-  name: string;
-  email: string;
-  selectedIdentities: UserIdentity[];
-  identityStatements: Record<string, string>;
-  onboardingCompleted: boolean;
-  squadId?: string;
-  teamId?: string; // New: Link user to a team
-  isAdmin?: boolean; // New: Designate user as a team admin
-  lastHuddleDate: string | null;
-  openToSquadSuggestions?: boolean;
-  language: string;
-  voicePreference?: string;
-  subscription: {
-    plan: 'free' | 'pro' | 'team';
-    expires?: string;
-  };
-  dailyTranslations: {
-    date: string;
-    count: number;
-  };
-  consent: {
-    privacyPolicy: string; // ISO Timestamp
-    termsOfService: string; // ISO Timestamp
-  };
-  dailyDebriefs: DailyDebrief[];
-}
-
 export interface Habit {
   id: string;
   title: string;
@@ -57,8 +18,8 @@ export interface Habit {
   cue: string;
   streak: number;
   longestStreak: number;
-  lastCompleted: string | null; // ISO date string
-  completions: string[]; // Array of ISO date strings
+  lastCompleted: string | null;
+  completions: string[];
   momentumShields: number;
   comebackChallenge?: {
     isActive: boolean;
@@ -67,7 +28,7 @@ export interface Habit {
   };
   microVersion?: {
     title: string;
-  } | null;
+  };
 }
 
 export interface BlueprintHabit {
@@ -76,16 +37,39 @@ export interface BlueprintHabit {
   cue: string;
 }
 
-export interface JoinRequest {
-  userName: string;
-  pitch: string;
-  approvals: string[];
-  denials: string[];
+export interface DailyDebrief {
+    date: string;
+    mood: 'terrible' | 'bad' | 'okay' | 'good' | 'great';
+    guidedAnswers: Record<string, string>;
+    privateNote: string;
+    isShared: boolean;
 }
 
-export interface KickVote {
-    targetUserName: string;
-    voters: string[];
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  selectedIdentities: UserIdentity[];
+  identityStatements: Record<string, string>;
+  onboardingCompleted: boolean;
+  lastHuddleDate: string | null;
+  language: string;
+  voicePreference?: string;
+  subscription: {
+    plan: 'free' | 'pro' | 'team';
+  };
+  dailyTranslations: {
+    date: string;
+    count: number;
+  };
+  consent: {
+    privacyPolicy: string;
+    termsOfService: string;
+  };
+  squadId?: string;
+  teamId?: string;
+  isAdmin?: boolean;
+  dailyDebriefs: DailyDebrief[];
 }
 
 export interface SquadQuest {
@@ -93,71 +77,48 @@ export interface SquadQuest {
     title: string;
     points: number;
     isCompleted: boolean;
-    completedBy: string | null; // User name
+    completedBy?: string;
 }
 
-export interface SharedWin {
-    id: string;
-    fromUserName: string;
-    mood: 'terrible' | 'bad' | 'okay' | 'good' | 'great';
-    message: string;
-    timestamp: string; // ISO date string
+export interface SquadSaga {
+    title: string;
+    chapter: number;
+    lore: string;
+    milestones: { description: string; isCompleted: boolean; }[];
+    boss: { name: string; hp: number; maxHp: number; };
 }
 
 export interface Squad {
-  id:string;
-  name: string;
-  members: string[]; // User names
-  goalIdentity: string;
-  sharedMomentum: number;
-  pendingRequests: JoinRequest[];
-  activeKickVotes: KickVote[];
-  dailyQuests?: {
-      date: string; // ISO date string (YYYY-MM-DD)
-      quests: SquadQuest[];
-  } | null;
-  sharedWins: SharedWin[];
-}
-
-export interface Nudge {
-    fromUserName: string;
-    message: string;
+    id: string;
+    name: string;
+    members: { userId: string; name: string; }[];
+    goalIdentity: string;
+    sharedMomentum: number;
+    quests: SquadQuest[];
+    joinRequests: { userName: string; pitch: string; votes: { [userId: string]: 'approve' | 'deny' } }[];
+    kickVotes: { [targetUserName: string]: { [voterUserId: string]: boolean } };
+    saga?: SquadSaga;
 }
 
 export interface Ripple {
     id: string;
     squadId: string;
-    fromUserName: string;
-    habitTitle: string;
-    identityTag: string;
-    timestamp: string; // ISO date string
-    nudges: Nudge[];
-    isQuestCompletion?: boolean;
-    questPoints?: number;
-}
-
-export interface ChatMessage {
-    id: string;
-    squadId: string;
-    fromUserName: string;
-    originalText: string;
-    originalLanguage: string; // The language code of the sender
-    translations: Record<string, string>; // e.g., { "es": "Hola mundo", "fr": "Bonjour le monde" }
-    timestamp: string; // ISO date string
+    authorId: string;
+    authorName: string;
+    type: 'streak_milestone' | 'comeback' | 'identity_levelup' | 'mission_complete' | 'squad_quest_complete' | 'win_shared';
+    message: string;
+    timestamp: string;
+    nudges: { nudgerName: string; message: string }[];
 }
 
 export interface Mission {
-  id:string;
-  title: string;
-  description: string;
-  habitId: string;
-  targetCompletions: number;
-  currentCompletions: number;
-  isCompleted: boolean;
-  reward: {
-      type: 'momentumShield';
-      amount: number;
-  };
+    id: string;
+    title: string;
+    description: string;
+    habitId: string;
+    targetCompletions: number;
+    currentCompletions: number;
+    isCompleted: boolean;
 }
 
 export interface DailyHuddleData {
@@ -165,46 +126,62 @@ export interface DailyHuddleData {
     mostImportantHabitId: string;
 }
 
-// New Types for Momentum for Teams
-export interface TeamMember {
+export interface ChatMessage {
+    id: string;
+    squadId: string;
     userId: string;
-    name: string;
-    email: string;
-    totalCompletions: number; // For leaderboard, privacy-safe
+    userName: string;
+    text: string;
+    timestamp: string;
 }
 
 export interface Team {
     id: string;
     name: string;
-    adminUserId: string;
-    members: TeamMember[];
+    members: {
+        userId: string;
+        name: string;
+        email: string;
+        totalCompletions: number;
+    }[];
     subscriptionStatus: 'active' | 'inactive';
 }
 
 export interface TeamChallenge {
-    id: string;
+    id:string;
     teamId: string;
     title: string;
     description: string;
-    habitCategory: string; // e.g., "Meditation", "Reading", "Exercise"
+    habitCategory: string;
     targetCompletions: number;
     currentCompletions: number;
     isActive: boolean;
 }
 
-// Fix: Added missing Financials interface for the FinancialsWidget.
 export interface Financials {
-  revenuePerProUser: number;
-  revenuePerTeamMember: number;
-  monthlyCosts: number;
+    revenuePerProUser: number;
+    revenuePerTeamMember: number;
+    monthlyCosts: number;
 }
 
-// New Type for Momentum Mentor
 export interface MentorIntervention {
-  type: 'STREAK_SAVER';
-  habitId: string;
-  message: string;
-  microHabit: {
-    title: string;
-  };
+    habitId: string;
+    message: string;
+    microHabit: {
+        title: string;
+    };
+}
+
+export interface ChapterUnlockData {
+    identityName: string;
+    newLevel: number;
+    chapterTitle: string;
+    lore: string;
+    masteryMission: {
+        title: string;
+        description: string;
+        habitId: string;
+        targetCompletions: number;
+    };
+    evolvedHabits: string[];
 }
