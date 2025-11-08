@@ -1,0 +1,82 @@
+{
+    "dashboard": {
+        "header": {
+            "title": "Hello, {{name}}",
+            "weeklyReview": "Weekly Review"
+        },
+        "mission": {
+            "title": "This Week's Momentum Mission",
+            "targetHabit": "Target Habit: \"{{habitTitle}}\"",
+            "completions": "Completions"
+        },
+        "identity": {
+            "title": "Identity Progress"
+        },
+        "squadHub": {
+            "title": "Amplify Your Momentum",
+            "noSquadMessage": "Building habits is easier with a team. Create or join a squad to stay accountable and celebrate wins together.",
+            "suggestedSquads": "Suggested Squads For You",
+            "or": "or",
+            "formSquad": "Form Your Own Squad"
+        },
+        "empty": {
+            "title": "Your journey starts here.",
+            "message": "Create your first routine to start building your new identity.",
+            "button": "Create Routine"
+        },
+        "focus": {
+            "title": "Today's Focus"
+        },
+        "time": {
+            "morning": "Morning",
+            "afternoon": "Afternoon",
+            "evening": "Evening"
+        }
+    },
+    "habitBuilder": {
+        "title": "Create New Routine",
+        "question1": "1. What's the simplest version of this action?",
+        "placeholder1": "e.g., Meditate for 5 minutes",
+        "placeholder2": "Description (optional, e.g., using Headspace)",
+        "question2": "2. Which identity does this reinforce?",
+        "question3": "3. When does this happen naturally in your day? (The Cue)",
+        "cueMorning": "In the morning",
+        "cueWorkout": "After my workout",
+        "cueLunch": "During my lunch break",
+        "cueBed": "Before bed",
+        "button": "Add Routine"
+    },
+    "squadHub": {
+        "joinFull": "Full",
+        "joinRequest": "Request to Join",
+        "pendingRequests": "Pending Join Requests ({{count}})",
+        "wantsToJoin": "{{name}} wants to join",
+        "approvals": "{{count}} / 2 approvals",
+        "deny": "Deny",
+        "approve": "Approve",
+        "approveDisabled": "Cannot approve, squad is full.",
+        "kickVote": "Kick Vote: {{voters}}/{{required}}",
+        "voteToRemove": "Vote to remove",
+        "voteToKick": "Vote to Kick",
+        "you": "(You)",
+        "tabActivity": "Activity Ripple",
+        "tabLeaderboard": "Leaderboard",
+        "tabMembers": "Members ({{count}})",
+        "noRipples": "Complete a habit to start the ripple!",
+        "aiCoachTitle": "AI Squad Coach",
+        "aiCoachLoading": "Analyzing squad energy...",
+        "aiCoachButton": "Get Squad Insight",
+        "leaderboardTitle": "Top 10 Global Squad Rankings",
+        "membersTitle": "Squad Members",
+        "sharedMomentum": "Shared Momentum",
+        "invite": "Invite"
+    },
+    "dailyHuddle": {
+        "oneThing": "Your One Thing Today",
+        "energyQuestion": "How's your energy today?",
+        "energyLow": "Low",
+        "energyMedium": "Medium",
+        "energyHigh": "High",
+        "energyTip": "Select 'Low' and we'll help you adapt your goal to keep momentum."
+    }
+}

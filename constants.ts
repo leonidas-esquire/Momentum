@@ -1,4 +1,3 @@
-
 import { Identity } from './types';
 
 export const IDENTITY_ARCHETYPES: Identity[] = [
@@ -38,4 +37,27 @@ export const IDENTITY_ARCHETYPES: Identity[] = [
     description: 'Builds physical strength and vitality',
     image: 'https://picsum.photos/seed/athlete/600/800',
   },
+];
+
+export const SUPPORTED_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'zh', name: '中文 (Mandarin)' },
+  { code: 'hi', name: 'हिन्दी (Hindi)' },
+  { code: 'es', name: 'Español (Spanish)' },
+  { code: 'fr', name: 'Français (French)' },
+  { code: 'ar', name: 'العربية (Arabic)' },
+  { code: 'bn', name: 'বাংলা (Bengali)' },
+  { code: 'ru', name: 'Русский (Russian)' },
+  { code: 'pt', name: 'Português (Portuguese)' },
+  { code: 'ur', name: 'اردو (Urdu)' },
+  { code: 'id', name: 'Bahasa Indonesia' },
+  { code: 'de', name: 'Deutsch (German)' },
+  { code: 'ja', name: '日本語 (Japanese)' },
+  { code: 'sw', name: 'Kiswahili' },
+  { code: 'mr', name: 'मराठी (Marathi)' },
+  { code: 'te', name: 'తెలుగు (Telugu)' },
+  { code: 'tr', name: 'Türkçe (Turkish)' },
+  { code: 'ta', name: 'தமிழ் (Tamil)' },
+  { code: 'vi', name: 'Tiếng Việt' },
+  { code: 'ko', name: '한국어 (Korean)' },
 ];

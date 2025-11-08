@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import { User, Identity } from '../types';
+import React, { useState, useContext } from 'react';
+import { User, Identity, BlueprintHabit, Habit } from '../types';
 import { IDENTITY_ARCHETYPES } from '../constants';
 import { Icon } from './Icon';
+import { generateHabitBlueprint } from '../services/geminiService';
+import { LanguageContext } from '../contexts/LanguageContext';
 
 interface OnboardingProps {
-  onComplete: (user: User) => void;
+  onComplete: (user: User, habits: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields'>[]) => void;
 }
 
-type OnboardingStep = 'welcome' | 'user-info' | 'identity-select' | 'loss-framing' | 'statement' | 'complete';
+type OnboardingStep = 'welcome' | 'user-info' | 'identity-select' | 'blueprint' | 'loss-framing' | 'statement' | 'complete';
 
 const IdentityCard: React.FC<{
     identity: Identity;
@@ -29,6 +31,26 @@ const IdentityCard: React.FC<{
     </div>
 );
 
+const BlueprintHabitCard: React.FC<{
+    habit: BlueprintHabit;
+    isSelected: boolean;
+    onToggle: () => void;
+}> = ({ habit, isSelected, onToggle }) => (
+    <div onClick={onToggle} className={`bg-brand-bg border-2 rounded-lg p-4 cursor-pointer transition-colors duration-200 ${isSelected ? 'border-brand-primary' : 'border-brand-secondary hover:border-brand-primary/50'}`}>
+        <div className="flex items-start gap-3">
+            <div className={`mt-1 w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border-2 ${isSelected ? 'bg-brand-primary border-brand-primary' : 'border-brand-secondary'}`}>
+                {isSelected && <Icon name="check" className="w-3 h-3 text-white" />}
+            </div>
+            <div>
+                <p className="font-semibold text-brand-text">{habit.title}</p>
+                <p className="text-sm text-brand-text-muted">{habit.description}</p>
+                <p className="text-xs text-brand-primary mt-1">{habit.cue}</p>
+            </div>
+        </div>
+    </div>
+);
+
+
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [name, setName] = useState('');
@@ -37,6 +59,13 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [currentLossFramingIndex, setCurrentLossFramingIndex] = useState(0);
   const [lossFramingAnswers, setLossFramingAnswers] = useState<Record<string, string>>({});
   const [identityStatements, setIdentityStatements] = useState<Record<string, string>>({});
+  
+  const [blueprintResults, setBlueprintResults] = useState<Record<string, BlueprintHabit[]>>({});
+  const [selectedBlueprintHabits, setSelectedBlueprintHabits] = useState<Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields'>[]>([]);
+  const [isLoadingBlueprint, setIsLoadingBlueprint] = useState(false);
+  // Fix: Used LanguageContext to get the current language for the API call.
+  const { language } = useContext(LanguageContext)!;
+
 
   const handleIdentityToggle = (identity: Identity) => {
     setSelectedIdentities(prev => {
@@ -48,6 +77,30 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         return [...prev, identity];
       }
       return prev;
+    });
+  };
+
+  const handleGenerateBlueprints = async () => {
+    setIsLoadingBlueprint(true);
+    const results: Record<string, BlueprintHabit[]> = {};
+    await Promise.all(selectedIdentities.map(async (identity) => {
+        // Fix: Passed the 'language' argument to the 'generateHabitBlueprint' function.
+        const habits = await generateHabitBlueprint(identity.name, language);
+        results[identity.name] = habits;
+    }));
+    setBlueprintResults(results);
+    setIsLoadingBlueprint(false);
+  };
+  
+  const handleToggleBlueprintHabit = (habit: BlueprintHabit, identityName: string) => {
+    const habitToAdd = { ...habit, identityTag: identityName };
+    setSelectedBlueprintHabits(prev => {
+      const isSelected = prev.some(h => h.title === habit.title && h.identityTag === identityName);
+      if (isSelected) {
+        return prev.filter(h => h.title !== habit.title || h.identityTag !== identityName);
+      } else {
+        return [...prev, habitToAdd];
+      }
     });
   };
   
@@ -116,11 +169,67 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               ))}
             </div>
             <div className="text-center mt-8">
-                <button onClick={() => setStep('loss-framing')} disabled={selectedIdentities.length === 0} className="bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg disabled:bg-brand-secondary disabled:cursor-not-allowed hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto">
+                <button onClick={() => setStep('blueprint')} disabled={selectedIdentities.length === 0} className="bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg disabled:bg-brand-secondary disabled:cursor-not-allowed hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto">
                     Next <Icon name="arrow-right" className="w-5 h-5" />
                 </button>
             </div>
           </div>
+        );
+        
+      case 'blueprint':
+        return (
+            <div className="animate-fade-in max-w-2xl mx-auto">
+                {isLoadingBlueprint && (
+                    <div className="text-center">
+                        <Icon name="sparkles" className="w-12 h-12 text-brand-primary mx-auto animate-pulse" />
+                        <h2 className="text-2xl font-bold mt-4">Generating Your Blueprints...</h2>
+                        <p className="text-brand-text-muted">Our AI is crafting your personalized starter habits.</p>
+                    </div>
+                )}
+                {!isLoadingBlueprint && Object.keys(blueprintResults).length > 0 && (
+                    <div>
+                        <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">Your Momentum Blueprint</h2>
+                        <p className="text-brand-text-muted text-center mb-8">Select the starter habits you want to adopt.</p>
+                        <div className="space-y-6">
+                            {selectedIdentities.map(identity => (
+                                <div key={identity.id}>
+                                    <h3 className="font-bold text-lg text-brand-primary mb-2">{identity.name}</h3>
+                                    <div className="space-y-3">
+                                        {blueprintResults[identity.name]?.map(habit => (
+                                            <BlueprintHabitCard 
+                                                key={habit.title} 
+                                                habit={habit}
+                                                isSelected={selectedBlueprintHabits.some(h => h.title === habit.title && h.identityTag === identity.name)}
+                                                onToggle={() => handleToggleBlueprintHabit(habit, identity.name)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="text-center mt-8">
+                            <button onClick={() => setStep('loss-framing')} className="bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto">
+                                {selectedBlueprintHabits.length > 0 ? `Adopt ${selectedBlueprintHabits.length} Habit(s)` : 'Continue'} <Icon name="arrow-right" className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+                {!isLoadingBlueprint && Object.keys(blueprintResults).length === 0 && (
+                     <div className="text-center bg-brand-surface border border-brand-secondary rounded-xl p-8">
+                        <Icon name="light-bulb" className="w-12 h-12 mx-auto text-brand-primary mb-4" />
+                        <h2 className="text-2xl font-semibold mb-2">Kickstart Your Journey</h2>
+                        <p className="text-brand-text-muted mb-6">Let our AI generate a personalized "Momentum Blueprint" with starter habits tailored to your new identities.</p>
+                        <div className="flex justify-center gap-4">
+                             <button onClick={() => setStep('loss-framing')} className="bg-brand-secondary text-white font-bold py-3 px-6 rounded-full text-base hover:bg-opacity-80 transition-colors duration-300">
+                                No, thanks
+                            </button>
+                            <button onClick={handleGenerateBlueprints} className="bg-brand-primary text-white font-bold py-3 px-6 rounded-full text-base hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto">
+                                <Icon name="sparkles" className="w-5 h-5"/> Generate Blueprint
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         );
         
       case 'loss-framing':
@@ -178,11 +287,16 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                           const newUser: User = {
                               name,
                               email,
-                              selectedIdentities,
+                              selectedIdentities: selectedIdentities.map(identity => ({
+                                  ...identity,
+                                  level: 1,
+                                  xp: 0,
+                              })),
                               identityStatements,
                               onboardingCompleted: true,
+                              lastHuddleDate: null,
                           };
-                          onComplete(newUser);
+                          onComplete(newUser, selectedBlueprintHabits);
                       }}
                       className="mt-8 bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto"
                   >

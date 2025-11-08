@@ -1,8 +1,10 @@
 
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useContext } from 'react';
 import { Habit } from '../types';
 import { generateWeeklyInsight } from '../services/geminiService';
 import { Icon } from './Icon';
+import { LanguageContext } from '../contexts/LanguageContext';
 
 interface WeeklyReviewProps {
   habits: Habit[];
@@ -12,6 +14,8 @@ interface WeeklyReviewProps {
 export const WeeklyReview: React.FC<WeeklyReviewProps> = ({ habits, onClose }) => {
   const [aiInsight, setAiInsight] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  // Fix: Used LanguageContext to get the current language for the API call.
+  const { language } = useContext(LanguageContext)!;
   
   const weeklyStats = useMemo(() => {
     const today = new Date();
@@ -51,7 +55,8 @@ export const WeeklyReview: React.FC<WeeklyReviewProps> = ({ habits, onClose }) =
   const handleGetInsight = async () => {
     setIsLoading(true);
     try {
-      const insight = await generateWeeklyInsight(weeklyStats);
+      // Fix: Passed the 'language' argument to the 'generateWeeklyInsight' function.
+      const insight = await generateWeeklyInsight(weeklyStats, language);
       setAiInsight(insight);
     } catch (error) {
       console.error(error);

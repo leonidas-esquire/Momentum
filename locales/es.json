@@ -1,0 +1,57 @@
+{
+    "dashboard": {
+        "header": {
+            "title": "Hola, {{name}}",
+            "weeklyReview": "Revisión Semanal"
+        },
+        "mission": {
+            "title": "Misión de Momentum de esta semana",
+            "targetHabit": "Hábito Objetivo: \"{{habitTitle}}\"",
+            "completions": "Completados"
+        },
+        "identity": {
+            "title": "Progreso de Identidad"
+        },
+        "squadHub": {
+            "title": "Amplifica tu Momentum",
+            "noSquadMessage": "Crear hábitos es más fácil en equipo. Crea o únete a un escuadrón para mantener la responsabilidad y celebrar victorias juntos.",
+            "suggestedSquads": "Escuadrones Sugeridos Para Ti",
+            "or": "o",
+            "formSquad": "Forma Tu Propio Escuadrón"
+        },
+        "empty": {
+            "title": "Tu viaje comienza aquí.",
+            "message": "Crea tu primera rutina para empezar a construir tu nueva identidad.",
+            "button": "Crear Rutina"
+        },
+        "focus": {
+            "title": "Enfoque de Hoy"
+        },
+        "time": {
+            "morning": "Mañana",
+            "afternoon": "Tarde",
+            "evening": "Noche"
+        }
+    },
+    "habitBuilder": {
+        "title": "Crear Nueva Rutina",
+        "question1": "1. ¿Cuál es la versión más simple de esta acción?",
+        "placeholder1": "Ej: Meditar por 5 minutos",
+        "placeholder2": "Descripción (opcional, ej: usando Headspace)",
+        "question2": "2. ¿Qué identidad refuerza esto?",
+        "question3": "3. ¿Cuándo ocurre esto naturalmente en tu día? (La Señal)",
+        "cueMorning": "Por la mañana",
+        "cueWorkout": "Después de mi entrenamiento",
+        "cueLunch": "Durante mi almuerzo",
+        "cueBed": "Antes de dormir",
+        "button": "Añadir Rutina"
+    },
+    "dailyHuddle": {
+        "oneThing": "Tu Única Cosa Hoy",
+        "energyQuestion": "¿Cómo está tu energía hoy?",
+        "energyLow": "Baja",
+        "energyMedium": "Media",
+        "energyHigh": "Alta",
+        "energyTip": "Selecciona 'Baja' y te ayudaremos a adaptar tu objetivo para mantener el momentum."
+    }
+}

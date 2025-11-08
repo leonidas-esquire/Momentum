@@ -1,5 +1,7 @@
 {
   "name": "Momentum: The Irresistible Habit App",
   "description": "A mobile-first habit and goal achievement application that exploits neuropsychological principles to create genuinely addictive positive behavior change. It uses identity-first framing, streak anxiety, and social accountability to make building habits compelling.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }
