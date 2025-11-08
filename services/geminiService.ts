@@ -131,6 +131,8 @@ export const generateProgressAnalysisReport = async (
         
         Then, create the following numbered sections using Markdown for headings (e.g., "1. Overall Summary"). Use double asterisks for bolding key phrases (e.g., **powerful declaration**).
         
+        **IMPORTANT FORMATTING RULE: All paragraphs must be left-aligned. Do NOT use full justification (aligning text to both left and right margins).**
+        
         **1. Overall Summary:**
         Provide an exceptional analysis of their performance. If they have perfect completion, praise it as more than just a good start, but a "powerful declaration of your commitment to being The ${identityName}." Mention their incredible rhythm, focus, and the unstoppable momentum they are building. End with an encouraging sentence like "Keep this energy soaring!"
         

@@ -242,17 +242,33 @@ export const ProgressAnalysisModal: React.FC<ProgressAnalysisModalProps> = ({ us
             pdf.circle(PAGE_MARGIN_X + 2, y, 0.8, 'F');
         }
 
-        wrappedLines.forEach((lineData, index) => {
+        wrappedLines.forEach((lineData) => {
+            const lineText = lineData.words.map(w => w.text).join(' ');
+            
+            // Render the full line as normal text first. This ensures proper left-alignment.
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(color);
+            pdf.text(lineText, leftMargin, y);
+            
+            // Then, overlay the bold parts at the correct positions
             let currentX = leftMargin;
             lineData.words.forEach(word => {
-                pdf.setFont('helvetica', word.isBold ? 'bold' : 'normal');
-                pdf.text(word.text + ' ', currentX, y);
-                currentX += pdf.getStringUnitWidth(word.text + ' ') * fontSize / pdf.internal.scaleFactor;
+                const wordWithSpace = word.text + ' ';
+                // Always measure with the normal font to get accurate positioning
+                pdf.setFont('helvetica', 'normal');
+                const wordWidth = pdf.getStringUnitWidth(wordWithSpace) * fontSize / pdf.internal.scaleFactor;
+                
+                if (word.isBold) {
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setTextColor(color); 
+                    pdf.text(word.text, currentX, y); // Render just the word, no space
+                }
+                currentX += wordWidth;
             });
+            
             y += fontSize * 0.352777 * LINE_HEIGHT_MULTIPLIER;
             checkPageBreak(0);
         });
-
     }
 
     // Finalize page numbers

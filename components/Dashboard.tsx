@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useContext } from 'react';
-import { Habit, User, Squad, Team, Financials, Mission, MentorIntervention, AssistRequest } from '../types';
+import { Habit, User, Squad, Team, Financials, Mission, MentorIntervention, AssistRequest, DailyDebrief, ChatMessage } from '../types';
 import { LanguageContext } from '../contexts/LanguageContext';
 import { Icon } from './Icon';
 import { HabitCard } from './HabitCard';
@@ -56,6 +56,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const todayStr = getTodayDateString();
   const hasDebriefedToday = user.dailyDebriefs.some(d => d.date === todayStr);
+
+  const handleSaveDebrief = (debrief: DailyDebrief, sharedWin: string | null) => {
+    const updatedUser = {
+      ...user,
+      dailyDebriefs: [...user.dailyDebriefs, debrief],
+    };
+    onUpdateUser(updatedUser);
+
+    if (sharedWin && user.squadId) {
+      const chatMessage: ChatMessage = {
+        id: `chat-${Date.now()}`,
+        userId: user.id,
+        userName: user.name,
+        text: sharedWin,
+        timestamp: Date.now(),
+        isHuddleMessage: true,
+      };
+      MOCK_CHAT.push(chatMessage);
+    }
+    setShowDailyDebrief(false);
+  };
 
   const handleCompleteHabit = (id: string) => {
     const habit = habits.find(h => h.id === id);
@@ -275,7 +296,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       />}
       {showSettings && <SettingsModal user={user} onClose={() => setShowSettings(false)} onUpdateUser={onUpdateUser} onDeleteAccount={onSignOut} onShowPrivacyPolicy={onShowPrivacyPolicy} onShowTermsOfService={onShowTermsOfService} />}
       {showWeeklyReview && <WeeklyReview habits={habits} onClose={() => setShowWeeklyReview(false)} />}
-      {showDailyDebrief && <DailyDebriefModal user={user} habits={habits} onClose={() => setShowDailyDebrief(false)} onSave={() => {}} />}
+      {showDailyDebrief && <DailyDebriefModal user={user} habits={habits} onClose={() => setShowDailyDebrief(false)} onSave={handleSaveDebrief} />}
       {showProgressAnalysis && <ProgressAnalysisModal user={user} habits={habits} onClose={() => setShowProgressAnalysis(false)} />}
       {habitToDelete && <DeleteConfirmation habitTitle={habitToDelete.title} onConfirm={() => { onDeleteHabit(habitToDelete.id); setHabitToDelete(null); }} onCancel={() => setHabitToDelete(null)} />}
       {assistRequest && <OfferAssistModal 
