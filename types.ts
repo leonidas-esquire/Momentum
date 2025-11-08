@@ -12,6 +12,14 @@ export interface UserIdentity extends Identity {
   xp: number;
 }
 
+export interface DailyDebrief {
+    date: string; // ISO date string (YYYY-MM-DD)
+    mood: 'terrible' | 'bad' | 'okay' | 'good' | 'great';
+    guidedAnswers: Record<string, string>;
+    privateNote: string;
+    isShared: boolean;
+}
+
 export interface User {
   id: string; // Added user ID for team admin reference
   name: string;
@@ -38,6 +46,7 @@ export interface User {
     privacyPolicy: string; // ISO Timestamp
     termsOfService: string; // ISO Timestamp
   };
+  dailyDebriefs: DailyDebrief[];
 }
 
 export interface Habit {
@@ -87,6 +96,14 @@ export interface SquadQuest {
     completedBy: string | null; // User name
 }
 
+export interface SharedWin {
+    id: string;
+    fromUserName: string;
+    mood: 'terrible' | 'bad' | 'okay' | 'good' | 'great';
+    message: string;
+    timestamp: string; // ISO date string
+}
+
 export interface Squad {
   id:string;
   name: string;
@@ -99,6 +116,7 @@ export interface Squad {
       date: string; // ISO date string (YYYY-MM-DD)
       quests: SquadQuest[];
   } | null;
+  sharedWins: SharedWin[];
 }
 
 export interface Nudge {
@@ -172,4 +190,21 @@ export interface TeamChallenge {
     targetCompletions: number;
     currentCompletions: number;
     isActive: boolean;
+}
+
+// Fix: Added missing Financials interface for the FinancialsWidget.
+export interface Financials {
+  revenuePerProUser: number;
+  revenuePerTeamMember: number;
+  monthlyCosts: number;
+}
+
+// New Type for Momentum Mentor
+export interface MentorIntervention {
+  type: 'STREAK_SAVER';
+  habitId: string;
+  message: string;
+  microHabit: {
+    title: string;
+  };
 }

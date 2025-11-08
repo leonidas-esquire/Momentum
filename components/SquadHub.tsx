@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { Squad, Ripple, User, JoinRequest, KickVote, Nudge, SquadQuest, ChatMessage } from '../types';
+import { Squad, Ripple, User, JoinRequest, KickVote, Nudge, SquadQuest, ChatMessage, SharedWin } from '../types';
 import { Icon } from './Icon';
 import { generateSquadInsight, generateSquadRecruitmentMessage } from '../services/geminiService';
 import { findMatchingSquads, SQUAD_MEMBER_LIMIT } from '../services/squadService';
@@ -26,6 +26,21 @@ interface SquadHubProps {
 }
 
 const NUDGE_OPTIONS = ["On fire! 🔥", "Inspiring ✨", "Momentum! 🚀", "Great work! 💪"];
+
+const timeAgo = (date: string) => {
+    const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + "y ago";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + "mo ago";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + "d ago";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + "h ago";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + "m ago";
+    return Math.floor(seconds) + "s ago";
+};
 
 const NudgeSelector: React.FC<{
     onSelect: (message: string) => void;
@@ -62,21 +77,6 @@ const NudgeSelector: React.FC<{
 
 const RippleItem: React.FC<{ ripple: Ripple; currentUser: User; onNudge: (rippleId: string, message: string) => void; }> = ({ ripple, currentUser, onNudge }) => {
   const [showNudgeSelector, setShowNudgeSelector] = useState(false);
-  
-  const timeAgo = (date: string) => {
-    const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
-    let interval = seconds / 31536000;
-    if (interval > 1) return Math.floor(interval) + "y ago";
-    interval = seconds / 2592000;
-    if (interval > 1) return Math.floor(interval) + "mo ago";
-    interval = seconds / 86400;
-    if (interval > 1) return Math.floor(interval) + "d ago";
-    interval = seconds / 3600;
-    if (interval > 1) return Math.floor(interval) + "h ago";
-    interval = seconds / 60;
-    if (interval > 1) return Math.floor(interval) + "m ago";
-    return Math.floor(seconds) + "s ago";
-  };
   
   const handleNudgeSelect = (message: string) => {
       onNudge(ripple.id, message);
@@ -126,6 +126,29 @@ const RippleItem: React.FC<{ ripple: Ripple; currentUser: User; onNudge: (ripple
     </div>
   );
 }
+
+const SharedWinCard: React.FC<{ win: SharedWin }> = ({ win }) => {
+    const { t } = useContext(LanguageContext)!;
+    const moodEmojiMap = {
+        terrible: '😫',
+        bad: '😐',
+        okay: '😊',
+        good: '😄',
+        great: '🚀'
+    };
+    return (
+        <div className="bg-brand-bg/50 p-4 rounded-lg animate-fade-in">
+            <div className="flex justify-between items-start">
+                <p className="font-bold text-brand-text">{win.fromUserName}</p>
+                <span className="text-xs text-brand-text-muted">{timeAgo(win.timestamp)}</span>
+            </div>
+            <div className="flex items-start gap-3 mt-2">
+                <span className="text-2xl mt-1">{moodEmojiMap[win.mood]}</span>
+                <p className="text-brand-text-muted italic border-l-2 border-brand-secondary pl-3">"{win.message}"</p>
+            </div>
+        </div>
+    );
+};
 
 const SquadSuggestionCard: React.FC<{ squad: Squad; onRequest: (squad: Squad) => void; }> = ({ squad, onRequest }) => {
     const { t } = useContext(LanguageContext)!;
@@ -210,7 +233,7 @@ const SquadMemberItem: React.FC<{
 export const SquadHub: React.FC<SquadHubProps> = ({ user, isProUser, squad, allSquads, ripples, chatMessages, onOpenSquadBuilder, onOpenInviteModal, onOpenRequestModal, onVoteOnRequest, onVoteToKick, onNudge, onCompleteQuest, onSendChatMessage, onTriggerUpgrade }) => {
   const [aiInsight, setAiInsight] = useState('');
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
-  const [activeTab, setActiveTab] = useState<'activity' | 'chat' | 'quests' | 'leaderboard' | 'members'>('activity');
+  const [activeTab, setActiveTab] = useState<'activity' | 'chat' | 'quests' | 'wins' | 'leaderboard' | 'members'>('activity');
   const [recruitmentMessage, setRecruitmentMessage] = useState('');
   const [isLoadingRecruitment, setIsLoadingRecruitment] = useState(false);
   const [suggestedSquads, setSuggestedSquads] = useState<Squad[]>([]);
@@ -311,6 +334,7 @@ export const SquadHub: React.FC<SquadHubProps> = ({ user, isProUser, squad, allS
         <div className="flex border-b border-brand-secondary mb-4 overflow-x-auto">
             <button onClick={() => setActiveTab('activity')} className={`py-2 px-4 font-semibold transition-colors duration-200 flex-shrink-0 ${activeTab === 'activity' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabActivity')}</button>
             <button onClick={() => setActiveTab('chat')} className={`py-2 px-4 font-semibold transition-colors duration-200 flex-shrink-0 ${activeTab === 'chat' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabChat')}</button>
+            <button onClick={() => setActiveTab('wins')} className={`py-2 px-4 font-semibold transition-colors duration-200 flex-shrink-0 ${activeTab === 'wins' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabWins')}</button>
             <button onClick={() => setActiveTab('quests')} className={`py-2 px-4 font-semibold transition-colors duration-200 flex-shrink-0 ${activeTab === 'quests' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabQuests')}</button>
             <button onClick={() => setActiveTab('leaderboard')} className={`py-2 px-4 font-semibold transition-colors duration-200 flex-shrink-0 ${activeTab === 'leaderboard' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabLeaderboard')}</button>
             <button onClick={() => setActiveTab('members')} className={`py-2 px-4 font-semibold transition-colors duration-200 flex-shrink-0 ${activeTab === 'members' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabMembers', { count: squad.members.length })}</button>
@@ -354,6 +378,19 @@ export const SquadHub: React.FC<SquadHubProps> = ({ user, isProUser, squad, allS
                     onSendMessage={(text) => onSendChatMessage(squad.id, text)}
                     onTriggerUpgrade={onTriggerUpgrade}
                 />
+            </div>
+        )}
+        
+        {activeTab === 'wins' && (
+            <div className="animate-fade-in">
+                 <h3 className="font-semibold mb-2">{t('squadHub.winsTitle')}</h3>
+                 <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                    {(squad.sharedWins && squad.sharedWins.length > 0) ? (
+                        squad.sharedWins.map(win => <SharedWinCard key={win.id} win={win} />)
+                    ) : (
+                        <p className="text-sm text-brand-text-muted text-center p-4">{t('squadHub.noWins')}</p>
+                    )}
+                 </div>
             </div>
         )}
 

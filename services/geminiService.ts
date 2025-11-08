@@ -459,3 +459,106 @@ export const generateSquadQuests = async (
         ];
     }
 };
+
+export const generateDebriefQuestionsAndWin = async (
+    habitsToday: { title: string; completed: boolean }[],
+    privateNote: string,
+    language: string
+): Promise<{ questions: string[]; shareableWin: string }> => {
+    const completedCount = habitsToday.filter(h => h.completed).length;
+    const totalCount = habitsToday.length;
+    const performanceSummary = `User completed ${completedCount} out of ${totalCount} habits.`;
+    const privateReflection = privateNote ? `User's private reflection: "${privateNote}"` : "User had no private reflection.";
+
+    const prompt = `
+        You are a reflective journal assistant for a habit app.
+        Today's performance: ${performanceSummary}
+        ${privateReflection}
+
+        Your tasks, in the specified language "${language}":
+        1.  Generate a JSON array of 2 insightful, open-ended questions to prompt deeper reflection. The questions should be based on their performance. If they did well, ask about success factors. If they struggled, ask about obstacles.
+        2.  Based on their performance and private reflection, draft a short (1-2 sentence), positive, and encouraging "Shareable Win" message that they could post to their squad. It should capture the essence of their day's journey.
+
+        Return a single JSON object with two keys: "questions" (an array of strings) and "shareableWin" (a string). Do not include any other text or markdown.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        questions: {
+                            type: Type.ARRAY,
+                            items: { type: Type.STRING },
+                        },
+                        shareableWin: { type: Type.STRING },
+                    },
+                    required: ["questions", "shareableWin"],
+                }
+            }
+        });
+        return JSON.parse(response.text.trim());
+    } catch (error) {
+        console.error(`Error generating debrief questions:`, error);
+        // Fallback
+        return {
+            questions: [
+                "What was one unexpected challenge you faced today?",
+                "What's one thing you're proud of from today, big or small?",
+            ],
+            shareableWin: "Reflected on the day. Grateful for the progress and ready for tomorrow!",
+        };
+    }
+};
+
+export const generateStreakSaverIntervention = async (
+  userName: string,
+  habitTitle: string,
+  streak: number,
+  language: string,
+): Promise<{ message: string; microHabit: { title: string } }> => {
+  const prompt = `
+    You are the Momentum Mentor, an encouraging AI habit coach. Your user, ${userName}, is about to break a ${streak}-day streak on their habit: "${habitTitle}". It's late in the day and they haven't completed it yet.
+
+    Your tasks:
+    1.  Write a short, empathetic, and encouraging message (2-3 sentences) to motivate them to do a small version of the habit to keep the streak alive. Address them by name. The message must be in this language: ${language}.
+    2.  Suggest a very easy "micro-version" of the habit. For example, if the habit is "Write 500 words", suggest "Just write one sentence". If it's "Run 3 miles", suggest "Put on your running shoes and walk for 5 minutes". The micro-habit must also be in the specified language.
+
+    Return a single JSON object with two keys: "message" (the encouraging text) and "microHabit" (an object with a single key "title" containing the micro-habit suggestion). Do not include any other text or markdown.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            message: { type: Type.STRING },
+            microHabit: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+              },
+              required: ['title'],
+            },
+          },
+          required: ['message', 'microHabit'],
+        },
+      },
+    });
+    return JSON.parse(response.text.trim());
+  } catch (error) {
+    console.error('Error generating streak saver intervention:', error);
+    return {
+      message: `Hey ${userName}, you've built such great momentum with "${habitTitle}"! The day's almost over, how about a tiny version to keep the ${streak}-day streak alive?`,
+      microHabit: { title: `Do ${habitTitle} for just 1 minute` },
+    };
+  }
+};

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useContext } from 'react';
-import { User, Habit, UserIdentity, Squad, Ripple, Mission, DailyHuddleData, ChatMessage, Team, TeamChallenge } from '../types';
+import { User, Habit, UserIdentity, Squad, Ripple, Mission, DailyHuddleData, ChatMessage, Team, TeamChallenge, Financials, MentorIntervention } from '../types';
 import { HabitCard } from './HabitCard';
 import { HabitBuilder } from './HabitBuilder';
 import { WeeklyReview } from './WeeklyReview';
@@ -15,6 +15,9 @@ import { generateSquadInvitationEmail, generateMembershipPitch } from '../servic
 import { LanguageContext } from '../contexts/LanguageContext';
 import { TeamHub } from './TeamHub';
 import { TeamAdminDashboard } from './TeamAdminDashboard';
+import { FinancialsWidget } from './FinancialsWidget';
+import { MomentumMentorWidget } from './MomentumMentorWidget';
+import { isToday } from '../utils/date';
 
 interface InviteModalProps {
   user: User;
@@ -194,6 +197,9 @@ interface DashboardProps {
   showDailyHuddle: boolean;
   teams: Team[];
   teamChallenges: TeamChallenge[];
+  financials: Financials;
+  allUsers: User[];
+  mentorIntervention: MentorIntervention | null;
   onAddHabit: (newHabit: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions'>) => void;
   onCompleteHabit: (habitId: string) => void;
   onDeleteHabit: (habitId: string) => void;
@@ -213,21 +219,16 @@ interface DashboardProps {
   onTriggerUpgrade: (reason: string) => void;
   onCreateTeamChallenge: (challenge: Omit<TeamChallenge, 'id' | 'currentCompletions' | 'isActive'>) => void;
   onOpenSettings: () => void;
+  onOpenDailyDebrief: () => void;
+  onAcceptMicroHabit: (habitId: string, microHabit: { title: string; }) => void;
+  onDismissMentor: () => void;
 }
 
-const isToday = (someDate: string | null) => {
-    if (!someDate) return false;
-    const today = new Date();
-    const date = new Date(someDate);
-    return date.getDate() === today.getDate() &&
-           date.getMonth() === today.getMonth() &&
-           date.getFullYear() === today.getFullYear();
-};
-
 export const Dashboard: React.FC<DashboardProps> = ({ 
-  user, habits, squads, ripples, chatMessages, priorityHabitId, mission, teams, teamChallenges, onAddHabit, onCompleteHabit, onDeleteHabit, onUpdateUser, onSetPriorityHabit,
+  user, habits, squads, ripples, chatMessages, priorityHabitId, mission, teams, teamChallenges, financials, allUsers, mentorIntervention,
+  onAddHabit, onCompleteHabit, onDeleteHabit, onUpdateUser, onSetPriorityHabit,
   levelUpInfo, onCloseLevelUpModal, onEvolveHabit, onCreateSquad, onRequestToJoinSquad, onVoteOnJoinRequest, onVoteToKick, onNudge, onCompleteSquadQuest,
-  onSendChatMessage, onTriggerUpgrade, onCreateTeamChallenge, onOpenSettings
+  onSendChatMessage, onTriggerUpgrade, onCreateTeamChallenge, onOpenSettings, onOpenDailyDebrief, onAcceptMicroHabit, onDismissMentor
 }) => {
   const [showHabitBuilder, setShowHabitBuilder] = useState(false);
   const [showSquadBuilder, setShowSquadBuilder] = useState(false);
@@ -246,6 +247,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const firstName = user.name.split(' ')[0];
   const formattedDate = new Intl.DateTimeFormat(language, { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
+  
+  const shouldShowDebrief = useMemo(() => {
+    const currentHour = new Date().getHours();
+    const today = new Date().toISOString().split('T')[0];
+    const hasCompletedHabitToday = habits.some(h => h.lastCompleted && h.lastCompleted.startsWith(today));
+    const hasDebriefedToday = user.dailyDebriefs.some(d => d.date === today);
+    return currentHour >= 19 && hasCompletedHabitToday && !hasDebriefedToday;
+  }, [habits, user.dailyDebriefs]);
 
   const handleSaveName = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -368,13 +377,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
         
         <main className="max-w-4xl mx-auto">
           {isAdminView && userTeam ? (
-            <TeamAdminDashboard 
-                team={userTeam}
-                challenges={teamChallenges.filter(c => c.teamId === userTeam.id)}
-                onCreateChallenge={onCreateTeamChallenge}
-            />
+            <>
+              <FinancialsWidget financials={financials} allUsers={allUsers} teams={teams} />
+              <div className="mt-8">
+                  <TeamAdminDashboard 
+                      team={userTeam}
+                      challenges={teamChallenges.filter(c => c.teamId === userTeam.id)}
+                      onCreateChallenge={onCreateTeamChallenge}
+                  />
+              </div>
+            </>
           ) : (
             <>
+              {mentorIntervention && (
+                <MomentumMentorWidget
+                    intervention={mentorIntervention}
+                    onAccept={onAcceptMicroHabit}
+                    onDismiss={onDismissMentor}
+                />
+              )}
+              {shouldShowDebrief && (
+                <div className="bg-brand-primary/10 border border-brand-primary/20 rounded-xl p-4 mb-8 flex items-center justify-between animate-fade-in">
+                  <div className="flex items-center gap-3">
+                    <Icon name="book-open" className="w-6 h-6 text-brand-primary" />
+                    <div>
+                      <h3 className="font-bold">{t('dailyDebrief.promptTitle')}</h3>
+                      <p className="text-sm text-brand-text-muted">{t('dailyDebrief.promptSubtitle')}</p>
+                    </div>
+                  </div>
+                  <button onClick={onOpenDailyDebrief} className="bg-brand-primary text-white font-bold py-2 px-4 rounded-full text-sm hover:bg-opacity-80 transition-colors">
+                    {t('dailyDebrief.promptButton')}
+                  </button>
+                </div>
+              )}
               {mission && !mission.isCompleted && <MomentumMissionCard mission={mission} habitTitle={missionHabitTitle} />}
               
               <IdentityStatus identities={user.selectedIdentities} />

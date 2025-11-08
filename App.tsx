@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Onboarding } from './components/Onboarding';
 import { Dashboard } from './components/Dashboard';
-import { User, Habit, UserIdentity, Squad, Ripple, Mission, DailyHuddleData, JoinRequest, Nudge, SquadQuest, ChatMessage, Team, TeamChallenge } from './types';
+import { User, Habit, UserIdentity, Squad, Ripple, Mission, DailyHuddleData, JoinRequest, Nudge, SquadQuest, ChatMessage, Team, TeamChallenge, DailyDebrief, SharedWin, Financials, MentorIntervention } from './types';
 import { Toast, ToastMessage } from './components/Toast';
-import { generateMomentumMission, generateDailyHuddle, generateLowEnergySuggestion, generateSquadQuests, translateText } from './services/geminiService';
+import { generateMomentumMission, generateDailyHuddle, generateLowEnergySuggestion, generateSquadQuests, translateText, generateStreakSaverIntervention } from './services/geminiService';
 // Fix: Imported the Icon component to resolve a 'Cannot find name' error.
 import { Icon } from './components/Icon';
 import { LanguageContext } from './contexts/LanguageContext';
@@ -11,15 +11,17 @@ import { Chatbot } from './components/Chatbot';
 import { UpgradeModal } from './components/UpgradeModal';
 import { SettingsModal } from './components/SettingsModal';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
+import { DailyDebriefModal } from './components/DailyDebriefModal';
+import { getTodayDateString, isSameDay } from './utils/date';
 
 
 const initialSquads: Squad[] = [
-  { id: 'squad-1', name: 'Momentum Mavericks', goalIdentity: 'Achiever', members: ['Leo', 'Mia', 'Zoe'], sharedMomentum: 15432, pendingRequests: [], activeKickVotes: [] },
-  { id: 'squad-2', name: 'The Consistency Crew', goalIdentity: 'Creator', members: ['Alex', 'Ben'], sharedMomentum: 12109, pendingRequests: [], activeKickVotes: [] },
-  { id: 'squad-3', name: 'Habit Hackers', goalIdentity: 'Learner', members: ['Chloe', 'David', 'Eva', 'Frank'], sharedMomentum: 9876, pendingRequests: [], activeKickVotes: [] },
-  { id: 'squad-4', name: 'Dopamine Dynamos', goalIdentity: 'Athlete', members: ['Grace', 'Henry'], sharedMomentum: 7531, pendingRequests: [], activeKickVotes: [] },
-  { id: 'squad-5', name: 'The Cultivators', goalIdentity: 'Connector', members: ['Ivy', 'Jack', 'Kara'], sharedMomentum: 23145, pendingRequests: [], activeKickVotes: [] },
-  { id: 'squad-6', name: 'Achiever\'s Alliance', goalIdentity: 'Achiever', members: ['Nora', 'Oscar'], sharedMomentum: 18345, pendingRequests: [], activeKickVotes: [] },
+  { id: 'squad-1', name: 'Momentum Mavericks', goalIdentity: 'Achiever', members: ['Leo', 'Mia', 'Zoe'], sharedMomentum: 15432, pendingRequests: [], activeKickVotes: [], sharedWins: [] },
+  { id: 'squad-2', name: 'The Consistency Crew', goalIdentity: 'Creator', members: ['Alex', 'Ben'], sharedMomentum: 12109, pendingRequests: [], activeKickVotes: [], sharedWins: [] },
+  { id: 'squad-3', name: 'Habit Hackers', goalIdentity: 'Learner', members: ['Chloe', 'David', 'Eva', 'Frank'], sharedMomentum: 9876, pendingRequests: [], activeKickVotes: [], sharedWins: [] },
+  { id: 'squad-4', name: 'Dopamine Dynamos', goalIdentity: 'Athlete', members: ['Grace', 'Henry'], sharedMomentum: 7531, pendingRequests: [], activeKickVotes: [], sharedWins: [] },
+  { id: 'squad-5', name: 'The Cultivators', goalIdentity: 'Connector', members: ['Ivy', 'Jack', 'Kara'], sharedMomentum: 23145, pendingRequests: [], activeKickVotes: [], sharedWins: [] },
+  { id: 'squad-6', name: 'Achiever\'s Alliance', goalIdentity: 'Achiever', members: ['Nora', 'Oscar'], sharedMomentum: 18345, pendingRequests: [], activeKickVotes: [], sharedWins: [] },
 ];
 
 const mockTeam: Team = {
@@ -36,6 +38,22 @@ const mockTeam: Team = {
 
 const mockTeamChallenges: TeamChallenge[] = [
     { id: 'challenge-1', teamId: 'team-acme-corp', title: 'Q3 Wellness Push', description: 'Log 500 minutes of mindfulness or exercise.', habitCategory: 'Wellness', targetCompletions: 500, currentCompletions: 275, isActive: true },
+];
+
+// Mock user data for financial simulation
+const MOCK_OTHER_USERS: User[] = [
+    {
+        id: 'mock-user-pro-1', name: 'Pro User One', email: 'pro1@example.com',
+        selectedIdentities: [], identityStatements: {}, onboardingCompleted: true, lastHuddleDate: null, language: 'en',
+        subscription: { plan: 'pro' }, dailyTranslations: { date: '', count: 0 },
+        consent: { privacyPolicy: new Date().toISOString(), termsOfService: new Date().toISOString() }, dailyDebriefs: []
+    },
+    {
+        id: 'mock-user-pro-2', name: 'Pro User Two', email: 'pro2@example.com',
+        selectedIdentities: [], identityStatements: {}, onboardingCompleted: true, lastHuddleDate: null, language: 'en',
+        subscription: { plan: 'pro' }, dailyTranslations: { date: '', count: 0 },
+        consent: { privacyPolicy: new Date().toISOString(), termsOfService: new Date().toISOString() }, dailyDebriefs: []
+    },
 ];
 
 const SQUAD_MEMBER_LIMIT = 5;
@@ -67,9 +85,20 @@ const App: React.FC = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showPrivacyPolicyModal, setShowPrivacyPolicyModal] = useState(false);
 
+  // Daily Debrief state
+  const [showDailyDebrief, setShowDailyDebrief] = useState(false);
+
   // B2B State
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamChallenges, setTeamChallenges] = useState<TeamChallenge[]>([]);
+  
+  // Financial simulation state
+  const [financials, setFinancials] = useState<Financials>({ revenuePerProUser: 5, revenuePerTeamMember: 8, monthlyCosts: 10000 });
+  const [allUsers, setAllUsers] = useState<User[]>(MOCK_OTHER_USERS);
+
+  // Mentor state
+  const [mentorIntervention, setMentorIntervention] = useState<MentorIntervention | null>(null);
+  const lastMentorCheck = useRef<string | null>(null);
 
   const pendingTranslations = useRef(new Set<string>());
 
@@ -88,21 +117,23 @@ const App: React.FC = () => {
     }, 5000);
   };
 
-  const getTodayDateString = () => {
-    return new Date().toISOString().split('T')[0];
-  };
-
   const triggerUpgradeModal = (reason: string) => {
     setUpgradeReason(reason);
     setShowUpgradeModal(true);
   };
+  
+  const handleUpdateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    setAllUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+  };
 
   const handleSimulateUpgrade = () => {
     if (user) {
-        setUser({
+        const updatedUser = {
             ...user,
-            subscription: { plan: 'pro' },
-        });
+            subscription: { plan: 'pro' as 'pro' },
+        };
+        handleUpdateUser(updatedUser);
         addToast("Welcome to Momentum Pro! All features unlocked.", 'success');
         setShowUpgradeModal(false);
     }
@@ -131,12 +162,18 @@ const App: React.FC = () => {
             if (!parsedUser.language) parsedUser.language = 'en';
             if (!parsedUser.subscription) parsedUser.subscription = { plan: 'free' };
             if (!parsedUser.dailyTranslations) parsedUser.dailyTranslations = { date: '', count: 0 };
+            if (!parsedUser.dailyDebriefs) parsedUser.dailyDebriefs = [];
     
             // If user is on a team, they get pro features.
             const userTeam = storedTeams ? (JSON.parse(storedTeams) as Team[]).find(t => t.id === parsedUser.teamId) : null;
             if (userTeam && userTeam.subscriptionStatus === 'active') {
                 parsedUser.subscription.plan = 'team';
             }
+            
+            setAllUsers(prev => {
+                const otherUsers = prev.filter(u => u.id !== parsedUser.id);
+                return [parsedUser, ...otherUsers];
+            });
     
             setUser(parsedUser);
             if (parsedUser.language) {
@@ -167,12 +204,6 @@ const App: React.FC = () => {
     }
     setIsLoaded(true);
   }, []);
-  
-  const isSameDay = (d1: Date, d2: Date) => {
-      return d1.getFullYear() === d2.getFullYear() &&
-             d1.getMonth() === d2.getMonth() &&
-             d1.getDate() === d2.getDate();
-  };
 
   // Daily Huddle Check
   useEffect(() => {
@@ -382,6 +413,46 @@ const App: React.FC = () => {
     });
 
   }, [chatMessages, user?.language, user?.subscription.plan]);
+  
+  // Mentor Intervention Check
+  useEffect(() => {
+    const todayStr = getTodayDateString();
+    if (isLoaded && user?.onboardingCompleted && habits.length > 0 && lastMentorCheck.current !== todayStr && !mentorIntervention) {
+        const checkTime = new Date();
+        // Only run in the evening
+        if (checkTime.getHours() >= 19) {
+            lastMentorCheck.current = todayStr;
+
+            const yesterday = new Date();
+            yesterday.setDate(checkTime.getDate() - 1);
+
+            const atRiskHabits = habits.filter(h => {
+                if (h.streak < 3) return false;
+                const lastCompletedDate = h.lastCompleted ? new Date(h.lastCompleted) : null;
+                if (!lastCompletedDate) return false;
+
+                const isCompletedToday = isSameDay(checkTime, lastCompletedDate);
+                const isCompletedYesterday = isSameDay(yesterday, lastCompletedDate);
+
+                return isCompletedYesterday && !isCompletedToday && !h.comebackChallenge?.isActive;
+            });
+            
+            if (atRiskHabits.length > 0) {
+                // Prioritize the one with the longest streak
+                const targetHabit = atRiskHabits.sort((a,b) => b.streak - a.streak)[0];
+
+                generateStreakSaverIntervention(user.name, targetHabit.title, targetHabit.streak, language).then(intervention => {
+                    setMentorIntervention({
+                        type: 'STREAK_SAVER',
+                        habitId: targetHabit.id,
+                        ...intervention,
+                    });
+                });
+            }
+        }
+    }
+  }, [isLoaded, user, habits, language, mentorIntervention]);
+
 
   const handleOnboardingComplete = (
     newUser: User,
@@ -396,6 +467,7 @@ const App: React.FC = () => {
         voicePreference: 'Kore',
         subscription: { plan: 'free' },
         dailyTranslations: { date: getTodayDateString(), count: 0 },
+        dailyDebriefs: [],
         // For demo: automatically add new user to the mock team
         teamId: mockTeam.id,
         isAdmin: true, // Make them the admin
@@ -408,6 +480,7 @@ const App: React.FC = () => {
     setTeams([updatedTeam]);
     setTeamChallenges(mockTeamChallenges);
     setUser(finalUser);
+    setAllUsers([finalUser, ...MOCK_OTHER_USERS]);
   
     const habitsToAdd: Habit[] = blueprintHabits.map(h => ({
       ...h,
@@ -576,8 +649,6 @@ const App: React.FC = () => {
     setHabits(prev => prev.filter(habit => habit.id !== habitId));
   };
 
-  const handleUpdateUser = (updatedUser: User) => setUser(updatedUser);
-
   const handleSetPriorityHabit = (habitId: string) => setPriorityHabitId(prevId => (prevId === habitId ? null : habitId));
 
   const handleEvolveHabit = (habitId: string, newTitle: string) => {
@@ -595,6 +666,7 @@ const App: React.FC = () => {
       sharedMomentum: 0,
       pendingRequests: [],
       activeKickVotes: [],
+      sharedWins: [],
     };
     setSquads(prev => [...prev, newSquad]);
     setUser({ ...user, squadId: newSquad.id });
@@ -842,6 +914,46 @@ const App: React.FC = () => {
     addToast("Your account and all data have been permanently deleted.", "success");
   };
 
+  const handleSaveDebrief = (debrief: DailyDebrief, sharedWin: string | null) => {
+    if (!user) return;
+
+    // Update user's debrief history
+    const updatedUser = {
+      ...user,
+      dailyDebriefs: [...user.dailyDebriefs.filter(d => d.date !== debrief.date), debrief],
+    };
+    setUser(updatedUser);
+    addToast("Your daily reflection has been saved!", 'success');
+
+    // If a win was shared, add it to the squad
+    if (sharedWin && user.squadId) {
+      const newWin: SharedWin = {
+        id: `win-${Date.now()}`,
+        fromUserName: user.name,
+        mood: debrief.mood,
+        message: sharedWin,
+        timestamp: new Date().toISOString(),
+      };
+      setSquads(squads => squads.map(s => {
+        if (s.id === user.squadId) {
+          return { ...s, sharedWins: [newWin, ...(s.sharedWins || [])] };
+        }
+        return s;
+      }));
+    }
+    setShowDailyDebrief(false);
+  };
+  
+  const handleAcceptMicroHabit = (habitId: string, microHabit: { title: string }) => {
+    setHabits(prevHabits => prevHabits.map(h => h.id === habitId ? { ...h, microVersion: microHabit } : h));
+    setMentorIntervention(null);
+    addToast("Great! Let's get it done.", 'info');
+  };
+
+  const handleDismissMentor = () => {
+      setMentorIntervention(null);
+  };
+
 
   if (!isLoaded) return <div className="min-h-screen bg-brand-bg flex items-center justify-center"><p>Loading...</p></div>;
   if (isGeneratingHuddle && !dailyHuddleData) {
@@ -866,7 +978,10 @@ const App: React.FC = () => {
                 mission={mission}
                 priorityHabitId={priorityHabitId}
                 teams={teams}
+                allUsers={allUsers}
+                financials={financials}
                 teamChallenges={teamChallenges}
+                mentorIntervention={mentorIntervention}
                 onAddHabit={handleAddHabit} 
                 onCompleteHabit={handleCompleteHabit} 
                 onDeleteHabit={handleDeleteHabit} 
@@ -888,6 +1003,9 @@ const App: React.FC = () => {
                 onTriggerUpgrade={triggerUpgradeModal}
                 onCreateTeamChallenge={handleCreateTeamChallenge}
                 onOpenSettings={() => setShowSettingsModal(true)}
+                onOpenDailyDebrief={() => setShowDailyDebrief(true)}
+                onAcceptMicroHabit={handleAcceptMicroHabit}
+                onDismissMentor={handleDismissMentor}
             />
             {showDailyHuddle && dailyHuddleData && user && (
                 <Chatbot 
@@ -897,6 +1015,14 @@ const App: React.FC = () => {
                     huddleData={dailyHuddleData}
                     onClose={() => setShowDailyHuddle(false)}
                     onHuddleComplete={handleEnergySelect}
+                />
+            )}
+             {showDailyDebrief && user && (
+                <DailyDebriefModal
+                    user={user}
+                    habits={habits}
+                    onClose={() => setShowDailyDebrief(false)}
+                    onSave={handleSaveDebrief}
                 />
             )}
         </>

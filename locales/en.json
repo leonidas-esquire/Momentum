@@ -32,6 +32,11 @@
             "morning": "Morning",
             "afternoon": "Afternoon",
             "evening": "Evening"
+        },
+        "mentorWidget": {
+            "title": "Momentum Mentor",
+            "acceptButton": "Do Micro-Habit",
+            "dismissButton": "I'll do it"
         }
     },
     "habitBuilder": {
@@ -62,6 +67,7 @@
         "you": "(You)",
         "tabActivity": "Activity Ripple",
         "tabChat": "Chat",
+        "tabWins": "Wins",
         "tabQuests": "Quests",
         "tabLeaderboard": "Leaderboard",
         "tabMembers": "Members ({{count}})",
@@ -84,7 +90,9 @@
         "chatShowOriginal": "Show original",
         "chatShowTranslation": "Show translation",
         "chatTranslationLimit": "Daily translation limit reached.",
-        "upgrade": "Upgrade"
+        "upgrade": "Upgrade",
+        "winsTitle": "Shared Wins & Reflections",
+        "noWins": "Share a debrief to start celebrating wins together!"
     },
     "dailyHuddle": {
         "oneThing": "Your One Thing Today",
@@ -199,5 +207,31 @@
     "privacyPolicy": {
         "title": "Privacy Policy",
         "close": "Close"
+    },
+    "dailyDebrief": {
+        "promptTitle": "Time for your Daily Debrief",
+        "promptSubtitle": "Take a moment to reflect on your day's journey.",
+        "promptButton": "Start Debrief",
+        "title": "Daily Debrief",
+        "step1Title": "How was your day, really?",
+        "step2Title": "Let's dig a little deeper...",
+        "step3Title": "Add a private note (optional)",
+        "step3Placeholder": "Your thoughts, for your eyes only...",
+        "step4Title": "Share a win with your squad?",
+        "step4Subtitle": "Here's an AI-drafted summary of your reflection. Feel free to edit it before sharing.",
+        "loading": "AI is generating your reflection points...",
+        "buttonNext": "Next",
+        "buttonSave": "Save Debrief",
+        "buttonShare": "Save & Share Win"
+    },
+    "financialsWidget": {
+        "title": "Platform Financials (Simulated)",
+        "revenue": "Monthly Revenue",
+        "costs": "Monthly Costs",
+        "net": "Net P/L",
+        "profitabilityGoal": "Progress to Profitability",
+        "profitable": "Profitable",
+        "loss": "Operating at a Loss",
+        "breakEven": "Breaking Even"
     }
 }

@@ -324,6 +324,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpg
                                 privacyPolicy: now,
                                 termsOfService: now,
                               },
+                              dailyDebriefs: [],
                           };
                           onComplete(newUser, selectedBlueprintHabits);
                       }}

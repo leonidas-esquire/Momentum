@@ -32,6 +32,11 @@
             "morning": "Mañana",
             "afternoon": "Tarde",
             "evening": "Noche"
+        },
+        "mentorWidget": {
+            "title": "Mentor de Momentum",
+            "acceptButton": "Hacer Micro-Hábito",
+            "dismissButton": "Lo haré"
         }
     },
     "habitBuilder": {
@@ -62,6 +67,7 @@
         "you": "(Tú)",
         "tabActivity": "Actividad",
         "tabChat": "Chat",
+        "tabWins": "Victorias",
         "tabQuests": "Misiones",
         "tabLeaderboard": "Clasificación",
         "tabMembers": "Miembros ({{count}})",
@@ -84,7 +90,9 @@
         "chatShowOriginal": "Mostrar original",
         "chatShowTranslation": "Mostrar traducción",
         "chatTranslationLimit": "Límite diario de traducciones alcanzado.",
-        "upgrade": "Mejorar"
+        "upgrade": "Mejorar",
+        "winsTitle": "Victorias y Reflexiones Compartidas",
+        "noWins": "¡Comparte una reflexión para empezar a celebrar victorias juntos!"
     },
     "dailyHuddle": {
         "oneThing": "Tu Única Cosa Hoy",
@@ -199,5 +207,31 @@
     "privacyPolicy": {
         "title": "Política de Privacidad",
         "close": "Cerrar"
+    },
+    "dailyDebrief": {
+        "promptTitle": "Hora de tu Resumen Diario",
+        "promptSubtitle": "Tómate un momento para reflexionar sobre tu día.",
+        "promptButton": "Comenzar Resumen",
+        "title": "Resumen Diario",
+        "step1Title": "¿Cómo estuvo tu día, realmente?",
+        "step2Title": "Profundicemos un poco más...",
+        "step3Title": "Añade una nota privada (opcional)",
+        "step3Placeholder": "Tus pensamientos, solo para tus ojos...",
+        "step4Title": "¿Compartir una victoria con tu escuadrón?",
+        "step4Subtitle": "Aquí tienes un resumen de tu reflexión redactado por IA. Siéntete libre de editarlo antes de compartir.",
+        "loading": "La IA está generando tus puntos de reflexión...",
+        "buttonNext": "Siguiente",
+        "buttonSave": "Guardar Resumen",
+        "buttonShare": "Guardar y Compartir Victoria"
+    },
+    "financialsWidget": {
+        "title": "Finanzas de la Plataforma (Simulado)",
+        "revenue": "Ingresos Mensuales",
+        "costs": "Costos Mensuales",
+        "net": "Ganancia/Pérdida Neta",
+        "profitabilityGoal": "Progreso hacia la Rentabilidad",
+        "profitable": "Rentable",
+        "loss": "Operando con Pérdidas",
+        "breakEven": "Punto de Equilibrio"
     }
 }
