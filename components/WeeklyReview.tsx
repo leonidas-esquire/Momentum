@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo, useContext } from 'react';
 import { Habit } from '../types';
 import { generateWeeklyInsight } from '../services/geminiService';
@@ -13,8 +11,8 @@ interface WeeklyReviewProps {
 
 export const WeeklyReview: React.FC<WeeklyReviewProps> = ({ habits, onClose }) => {
   const [aiInsight, setAiInsight] = useState('');
+  const [nextWeekFocus, setNextWeekFocus] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  // Fix: Used LanguageContext to get the current language for the API call.
   const { language } = useContext(LanguageContext)!;
   
   const weeklyStats = useMemo(() => {
@@ -55,12 +53,13 @@ export const WeeklyReview: React.FC<WeeklyReviewProps> = ({ habits, onClose }) =
   const handleGetInsight = async () => {
     setIsLoading(true);
     try {
-      // Fix: Passed the 'language' argument to the 'generateWeeklyInsight' function.
-      const insight = await generateWeeklyInsight(weeklyStats, language);
-      setAiInsight(insight);
+      const result = await generateWeeklyInsight(weeklyStats, language);
+      setAiInsight(result.insight);
+      setNextWeekFocus(result.suggestion);
     } catch (error) {
       console.error(error);
       setAiInsight("There was an error generating your insight. Keep up the great work!");
+      setNextWeekFocus("Focus on consistency this week.");
     } finally {
       setIsLoading(false);
     }
@@ -110,6 +109,8 @@ export const WeeklyReview: React.FC<WeeklyReviewProps> = ({ habits, onClose }) =
                  <input
                     type="text"
                     placeholder="Set one micro-commitment for next week..."
+                    value={nextWeekFocus}
+                    onChange={(e) => setNextWeekFocus(e.target.value)}
                     className="w-full bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
                 />
             </div>

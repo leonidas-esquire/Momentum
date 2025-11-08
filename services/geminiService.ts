@@ -59,29 +59,48 @@ export const generateWeeklyInsight = async (
     mostConsistentHabit: string;
   },
   language: string
-): Promise<string> => {
+): Promise<{ insight: string; suggestion: string; }> => {
   const prompt = `
     You are an encouraging and insightful performance coach.
-    Analyze the following weekly habit statistics and provide a short, motivational insight (2-3 sentences).
-    Focus on celebrating wins and offering a gentle suggestion for improvement.
+    Analyze the following weekly habit statistics.
+    1. Provide a short, motivational insight (2-3 sentences). Focus on celebrating wins and offering a gentle suggestion for improvement.
+    2. Suggest one specific, actionable "micro-commitment" for next week based on the data. It should be a small, easy-to-achieve goal. For example, "Try doing '${stats.mostConsistentHabit}' on ${stats.worstDay} this week." or "Add one extra completion for any habit this week."
+
     Stats:
     - Total Completions: ${stats.totalCompletions}
     - Completion Rate: ${stats.completionRate.toFixed(0)}%
     - Best Day: ${stats.bestDay}
     - Worst Day: ${stats.worstDay}
     - Most Consistent Habit: "${stats.mostConsistentHabit}"
+
+    Respond in JSON format with keys "insight" and "suggestion".
     Respond in the language with this code: ${language}.
   `;
 
   try {
     const response = await ai.models.generateContent({
         model,
-        contents: prompt
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              insight: { type: Type.STRING },
+              suggestion: { type: Type.STRING },
+            },
+            required: ['insight', 'suggestion'],
+          },
+        },
     });
-    return response.text;
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText);
   } catch (error) {
     console.error('Error generating weekly insight:', error);
-    return 'An error occurred while generating your insight. Keep up the great work!';
+    return {
+        insight: 'An error occurred while generating your insight. Keep up the great work!',
+        suggestion: 'Focus on consistency this week.'
+    };
   }
 };
 
@@ -90,32 +109,41 @@ export const generateProgressAnalysisReport = async (
     habits: Habit[],
     language: string
 ): Promise<string> => {
+    const identityName = user.selectedIdentities[0]?.name || 'Achiever';
     const habitData = habits.map(h => `
-        - Habit: "${h.title}"
-          - Tied to Identity: ${h.identityTag}
-          - Current Streak: ${h.streak} days
-          - Longest Streak: ${h.longestStreak} days
-          - Total Completions: ${h.completions.length}
-          - Missed Days Recently: ${h.missedDays}
+        - Habit: "${h.title}" (Streak: ${h.streak} days, Longest: ${h.longestStreak}, Completions: ${h.completions.length})
     `).join('');
 
     const prompt = `
-        You are an expert performance and habit formation coach named Momentum AI.
-        Analyze the following comprehensive user data to generate an encouraging, insightful, and actionable progress report.
-        The user's name is ${user.name}.
-        Their chosen identities are: ${user.selectedIdentities.map(i => i.name).join(', ')}.
-
+        You are Momentum AI, an expert performance and habit formation coach. Your tone is incredibly positive, motivational, and insightful.
+        You are generating a personalized progress report for **${user.name}**, who has chosen the identity of **The ${identityName}**.
+        
         Here is their habit data:
         ${habitData}
 
-        Please structure your report in Markdown with the following sections:
-        1.  **Overall Summary:** A brief, motivational overview of their progress and momentum.
-        2.  **Identity Alignment:** Analyze how well their habits support each of their chosen identities. Celebrate successes and strong connections.
-        3.  **Strengths & Keystone Habits:** Identify which habits are strongest (e.g., long streaks, high consistency) and are likely having the most positive impact.
-        4.  **Opportunities for Growth:** Gently point out 1-2 habits they might be struggling with and suggest potential reasons without being critical.
-        5.  **Actionable Recommendations:** Provide 2-3 specific, positive, and easy-to-implement suggestions for the upcoming week to build even more momentum.
-
-        Your tone should be inspiring, data-driven, and supportive, not critical.
+        Please generate a comprehensive, branded report with the following structure and tone:
+        
+        **Report Title:** Start with the title: "Momentum AI: Your Progress Report, ${user.name}"
+        
+        **Greeting:** Follow with a personal greeting like "Hello ${user.name}, The ${identityName}!"
+        
+        **Introduction:** Write a short, powerful introductory paragraph (2-3 sentences) celebrating their fantastic start, dedication, and consistency. Mention that you're impressed and ready to dive into the progress they're building.
+        
+        Then, create the following numbered sections using Markdown for headings (e.g., "1. Overall Summary"). Use double asterisks for bolding key phrases (e.g., **powerful declaration**).
+        
+        **1. Overall Summary:**
+        Provide an exceptional analysis of their performance. If they have perfect completion, praise it as more than just a good start, but a "powerful declaration of your commitment to being The ${identityName}." Mention their incredible rhythm, focus, and the unstoppable momentum they are building. End with an encouraging sentence like "Keep this energy soaring!"
+        
+        **2. Identity Alignment:**
+        Analyze how their chosen habits perfectly support their identity as "The ${identityName}". If the alignment is strong, state it as a significant strength. Highlight one or two specific habits and explain *why* they are quintessential to their identity.
+        
+        **3. Strengths & Momentum Drivers:**
+        Identify their strongest habits (long streaks, perfect consistency). Pinpoint these as the "drivers" of their momentum. Celebrate these consistent actions as the foundation of their success.
+        
+        **4. Actionable Recommendations for Next Week:**
+        Provide 2-3 specific, positive, and forward-looking suggestions. Frame them as ways to "amplify momentum" or "level-up". Suggestions could include focusing on a new micro-habit, increasing the duration of a current habit slightly, or thinking about the next small step.
+        
+        Keep the entire report encouraging, data-driven, and supportive.
         Respond in the language with this code: ${language}.
     `;
 
