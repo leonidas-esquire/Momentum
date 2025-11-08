@@ -50,6 +50,7 @@ export interface Habit {
   completions: string[]; // Array of ISO date strings
   momentumShields: number;
   missedDays: number;
+  isFavorite?: boolean;
 }
 
 export interface BlueprintHabit {

@@ -15,7 +15,7 @@ import { WeeklyReview } from './WeeklyReview';
 import { DeleteConfirmation } from './DeleteConfirmation';
 import { OfferAssistModal } from './OfferAssistModal';
 import { DailyDebriefModal } from './DailyDebriefModal';
-import { getTodayDateString } from '../utils/date';
+import { getTodayDateString, isToday, isYesterday } from '../utils/date';
 import { MOCK_SQUADS, MOCK_TEAMS, MOCK_FINANCIALS, MOCK_QUESTS, MOCK_SAGA, MOCK_CHAT, MOCK_CHALLENGES, MOCK_ASSIST_REQUESTS } from '../App';
 
 interface DashboardProps {
@@ -52,6 +52,82 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const todayStr = getTodayDateString();
   const hasDebriefedToday = user.dailyDebriefs.some(d => d.date === todayStr);
 
+  const handleCompleteHabit = (id: string) => {
+    const habit = habits.find(h => h.id === id);
+    if (!habit || isToday(habit.lastCompleted)) return;
+
+    const now = new Date();
+    const todayISO = now.toISOString();
+
+    let newStreak = habit.streak;
+    if (habit.lastCompleted && isYesterday(habit.lastCompleted)) {
+        newStreak += 1;
+    } else {
+        newStreak = 1; // Reset or start streak
+    }
+
+    const updatedHabit: Habit = {
+        ...habit,
+        lastCompleted: todayISO,
+        completions: [...habit.completions, todayISO],
+        streak: newStreak,
+        longestStreak: Math.max(habit.longestStreak, newStreak),
+        missedDays: 0,
+    };
+    onUpdateHabit(updatedHabit);
+
+    // Award XP
+    const identityIndex = user.selectedIdentities.findIndex(i => i.name === habit.identityTag);
+    if (identityIndex > -1) {
+        const newIdentities = [...user.selectedIdentities];
+        const identity = newIdentities[identityIndex];
+        const newXp = identity.xp + 10; // Award 10 XP
+        const xpForNextLevel = identity.level * 100;
+        if (newXp >= xpForNextLevel) {
+            identity.level += 1;
+            identity.xp = newXp - xpForNextLevel;
+        } else {
+            identity.xp = newXp;
+        }
+        onUpdateUser({ ...user, selectedIdentities: newIdentities });
+    }
+  };
+
+  const handleUndoHabit = (id: string) => {
+      const habit = habits.find(h => h.id === id);
+      if (!habit || !isToday(habit.lastCompleted)) return;
+
+      const newCompletions = habit.completions.slice(0, -1);
+      const newLastCompleted = newCompletions.length > 0 ? newCompletions[newCompletions.length - 1] : null;
+
+      const updatedHabit: Habit = {
+          ...habit,
+          lastCompleted: newLastCompleted,
+          completions: newCompletions,
+          streak: habit.streak > 0 ? habit.streak - 1 : 0,
+      };
+      onUpdateHabit(updatedHabit);
+
+      // Remove XP
+      const identityIndex = user.selectedIdentities.findIndex(i => i.name === habit.identityTag);
+      if (identityIndex > -1) {
+          const newIdentities = [...user.selectedIdentities];
+          newIdentities[identityIndex].xp = Math.max(0, newIdentities[identityIndex].xp - 10);
+          onUpdateUser({ ...user, selectedIdentities: newIdentities });
+      }
+  };
+
+  const handleToggleFavorite = (id: string) => {
+      const habit = habits.find(h => h.id === id);
+      if (!habit) return;
+      onUpdateHabit({ ...habit, isFavorite: !habit.isFavorite });
+  };
+
+  const handleStartVoiceNote = (id: string) => {
+      console.log("Voice note feature for habit:", id);
+      alert("Voice notes coming soon!");
+  };
+
   const mission: Mission | null = useMemo(() => {
     if (habits.length === 0) return null;
     const mostConsistentHabit = habits.reduce((prev, current) => (prev.streak > current.streak) ? prev : current, habits[0]);
@@ -78,6 +154,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const userSquad = useMemo(() => MOCK_SQUADS.find(s => s.id === user.squadId), [user.squadId]);
   const userTeam = useMemo(() => MOCK_TEAMS.find(t => t.id === user.teamId), [user.teamId]);
+
+  const sortedHabits = useMemo(() => {
+    return [...habits].sort((a, b) => {
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        const aCompleted = isToday(a.lastCompleted);
+        const bCompleted = isToday(b.lastCompleted);
+        if (aCompleted && !bCompleted) return 1;
+        if (!aCompleted && bCompleted) return -1;
+        return 0;
+    });
+  }, [habits]);
 
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
@@ -117,8 +205,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </button>
           </div>
           <div className="space-y-3">
-            {habits.map(habit => (
-              <HabitCard key={habit.id} habit={habit} onComplete={() => {}} onUndo={() => {}} onDelete={() => setHabitToDelete(habit)} />
+            {sortedHabits.map(habit => (
+              <HabitCard 
+                key={habit.id} 
+                habit={habit} 
+                onComplete={handleCompleteHabit} 
+                onUndo={handleUndoHabit} 
+                onDelete={() => setHabitToDelete(habit)}
+                onToggleFavorite={handleToggleFavorite}
+                onStartVoiceNote={handleStartVoiceNote}
+              />
             ))}
              <button
                 onClick={() => {
