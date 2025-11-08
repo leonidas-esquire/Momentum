@@ -118,7 +118,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ user, habits, onClose }) => {
           },
           config: {
             responseModalities: [Modality.AUDIO],
-            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } } },
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: user.voicePreference || 'Zephyr' } } },
             systemInstruction: `You are Momentum, a friendly AI assistant for this habit app. Your user is ${user.name}. Keep answers concise and encouraging.`,
             tools: [{ functionDeclarations }],
           }
@@ -142,7 +142,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ user, habits, onClose }) => {
         inputAudioContext?.close();
         outputAudioContext?.close();
     };
-  }, []);
+  }, [user, habits]);
 
   return (
     <div className="fixed inset-0 bg-brand-bg/90 backdrop-blur-lg flex flex-col items-center z-50 p-4 animate-fade-in">

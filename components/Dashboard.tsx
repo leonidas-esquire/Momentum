@@ -14,7 +14,7 @@ import { MomentumMissionCard } from './MomentumMissionCard';
 import { DailyHuddle } from './DailyHuddle';
 import { generateSquadInvitationEmail, generateMembershipPitch } from '../services/geminiService';
 import { LanguageContext } from '../contexts/LanguageContext';
-import { SUPPORTED_LANGUAGES } from '../constants';
+import { SUPPORTED_LANGUAGES, TTS_VOICES } from '../constants';
 
 interface InviteModalProps {
   user: User;
@@ -237,6 +237,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
     onUpdateUser({ ...user, language: newLang });
   };
   
+  const handleVoiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newVoice = e.target.value;
+    onUpdateUser({ ...user, voicePreference: newVoice });
+  };
+
   const firstName = user.name.split(' ')[0];
   const formattedDate = new Intl.DateTimeFormat(language, { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
 
@@ -330,14 +335,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
             )}
             <p className="text-brand-text-muted">{formattedDate}</p>
           </div>
-          <div className="flex items-center gap-4 flex-shrink-0 ml-4">
+          <div className="flex items-center gap-2 flex-shrink-0 ml-4">
              <select
                 value={language}
                 onChange={handleLanguageChange}
                 className="bg-brand-surface border border-brand-secondary text-brand-text font-semibold py-2 px-3 rounded-full text-sm hover:bg-brand-secondary transition-colors duration-300 appearance-none"
+                aria-label="Select language"
              >
                 {SUPPORTED_LANGUAGES.map(lang => (
                     <option key={lang.code} value={lang.code}>{lang.name.split('(')[0].trim()}</option>
+                ))}
+            </select>
+             <select
+                value={user.voicePreference || TTS_VOICES[0].name}
+                onChange={handleVoiceChange}
+                className="bg-brand-surface border border-brand-secondary text-brand-text font-semibold py-2 px-3 rounded-full text-sm hover:bg-brand-secondary transition-colors duration-300 appearance-none"
+                aria-label="Select voice"
+             >
+                {TTS_VOICES.map(voice => (
+                    <option key={voice.name} value={voice.name}>{voice.name} ({voice.gender})</option>
                 ))}
             </select>
             <button 
@@ -454,6 +470,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           huddle={dailyHuddleData} 
           mostImportantHabit={mostImportantHabit} 
           onEnergySelect={onEnergySelect} 
+          voicePreference={user.voicePreference}
         />
       )}
 

@@ -22,6 +22,7 @@ export interface User {
   lastHuddleDate: string | null;
   openToSquadSuggestions?: boolean;
   language?: string;
+  voicePreference?: string;
 }
 
 export interface Habit {

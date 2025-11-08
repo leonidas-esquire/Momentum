@@ -221,7 +221,7 @@ const App: React.FC = () => {
     newUser: User,
     blueprintHabits: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields'>[]
   ) => {
-    setUser({ ...newUser, language, lastHuddleDate: null, openToSquadSuggestions: true });
+    setUser({ ...newUser, language, lastHuddleDate: null, openToSquadSuggestions: true, voicePreference: 'Kore' });
   
     const habitsToAdd: Habit[] = blueprintHabits.map(h => ({
       ...h,

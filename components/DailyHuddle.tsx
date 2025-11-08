@@ -9,9 +9,10 @@ interface DailyHuddleProps {
   huddle: DailyHuddleData;
   mostImportantHabit: Habit;
   onEnergySelect: (energy: 'low' | 'medium' | 'high') => void;
+  voicePreference?: string;
 }
 
-export const DailyHuddle: React.FC<DailyHuddleProps> = ({ huddle, mostImportantHabit, onEnergySelect }) => {
+export const DailyHuddle: React.FC<DailyHuddleProps> = ({ huddle, mostImportantHabit, onEnergySelect, voicePreference }) => {
   const [audioState, setAudioState] = useState<'loading' | 'playing' | 'idle' | 'error'>('loading');
   const [isMuted, setIsMuted] = useState(false);
   const audioBufferRef = useRef<AudioBuffer | null>(null);
@@ -34,7 +35,7 @@ export const DailyHuddle: React.FC<DailyHuddleProps> = ({ huddle, mostImportantH
 
   useEffect(() => {
     const initAudio = async () => {
-      const audioData = await generateSpeech(huddle.greeting);
+      const audioData = await generateSpeech(huddle.greeting, voicePreference);
       if (audioData) {
         try {
           // Fix: Cast window to any to resolve TypeScript errors for vendor-prefixed webkitAudioContext, which is needed for older browser compatibility.
@@ -56,7 +57,7 @@ export const DailyHuddle: React.FC<DailyHuddleProps> = ({ huddle, mostImportantH
     return () => {
         audioContextRef.current?.close();
     }
-  }, [huddle.greeting]);
+  }, [huddle.greeting, voicePreference]);
 
   return (
     <div className="fixed inset-0 bg-brand-bg/95 backdrop-blur-lg z-50 flex flex-col justify-center items-center p-4 text-center animate-fade-in">

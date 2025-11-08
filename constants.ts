@@ -61,3 +61,16 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'vi', name: 'Tiếng Việt' },
   { code: 'ko', name: '한국어 (Korean)' },
 ];
+
+export const TTS_VOICES = [
+  { name: 'Kore', gender: 'Female' },
+  { name: 'Puck', gender: 'Male' },
+  { name: 'Aura', gender: 'Female' },
+  { name: 'Orion', gender: 'Male' },
+  { name: 'Nova', gender: 'Female' },
+  { name: 'Charon', gender: 'Male' },
+  { name: 'Zephyr', gender: 'Female' },
+  { name: 'Fenrir', gender: 'Male' },
+  { name: 'Lyra', gender: 'Female' },
+  { name: 'Helios', gender: 'Male' },
+];
