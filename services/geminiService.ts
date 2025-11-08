@@ -1,17 +1,23 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { BlueprintHabit, Ripple } from '../types';
+import { GoogleGenAI, Type } from '@google/genai';
+import { BlueprintHabit } from '../types';
 
-// Fix: Initialize the GoogleGenAI client.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// Fix: Define the model to be used for consistency.
 const model = 'gemini-2.5-flash';
 
 export const generateHabitBlueprint = async (identityName: string, language: string): Promise<BlueprintHabit[]> => {
+  const prompt = `
+    You are an expert habit formation coach.
+    Based on the identity of "The ${identityName}", generate 3-5 specific, actionable, and easy-to-start daily habits.
+    For each habit, provide a "title", a "description", and a "cue" (a trigger for the habit, like "In the morning" or "After work").
+    Focus on small, achievable actions.
+    Respond in the language with this code: ${language}.
+  `;
+
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: `Generate 3 actionable, specific habits for someone who identifies as "${identityName}". Each habit should have a title (max 5 words), a short description (max 15 words), and a simple cue (e.g., "In the morning", "After my workout"). Respond in ${language}.`,
+      contents: prompt,
       config: {
         responseMimeType: 'application/json',
         responseSchema: {
@@ -29,101 +35,79 @@ export const generateHabitBlueprint = async (identityName: string, language: str
       },
     });
 
-    const jsonString = response.text.trim();
-    const habits = JSON.parse(jsonString);
-    return habits as BlueprintHabit[];
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText);
   } catch (error) {
-    console.error("Error generating habit blueprint:", error);
+    console.error('Error generating habit blueprint:', error);
+    // Fallback with a generic habit if API fails
     return [
-      { title: 'Review Daily Goals', description: 'Quickly check your top priorities for the day.', cue: 'With morning coffee' },
-      { title: 'Practice One Skill', description: 'Dedicate 15 minutes to deliberate practice.', cue: 'After work' },
-      { title: 'Plan Tomorrow', description: 'Set your main objective for the next day.', cue: 'Before bed' },
+      {
+        title: 'Review Your Goals',
+        description: `Take 5 minutes to look over your goals related to being a ${identityName}.`,
+        cue: 'In the morning with your coffee',
+      },
     ];
   }
 };
 
-export const generateWeeklyInsight = async (stats: any, language: string): Promise<string> => {
+export const generateWeeklyInsight = async (
+  stats: {
+    totalCompletions: number;
+    completionRate: number;
+    bestDay: string;
+    worstDay: string;
+    mostConsistentHabit: string;
+  },
+  language: string
+): Promise<string> => {
+  const prompt = `
+    You are an encouraging and insightful performance coach.
+    Analyze the following weekly habit statistics and provide a short, motivational insight (2-3 sentences).
+    Focus on celebrating wins and offering a gentle suggestion for improvement.
+    Stats:
+    - Total Completions: ${stats.totalCompletions}
+    - Completion Rate: ${stats.completionRate.toFixed(0)}%
+    - Best Day: ${stats.bestDay}
+    - Worst Day: ${stats.worstDay}
+    - Most Consistent Habit: "${stats.mostConsistentHabit}"
+    Respond in the language with this code: ${language}.
+  `;
+
   try {
-    const prompt = `Based on these weekly stats, generate a concise, encouraging, and actionable insight (max 40 words). Stats: ${JSON.stringify(stats)}. Respond in ${language}.`;
     const response = await ai.models.generateContent({
-      model,
-      contents: prompt,
+        model,
+        contents: prompt
     });
-    return response.text.trim();
+    return response.text;
   } catch (error) {
-    console.error("Error generating weekly insight:", error);
-    return "Keep up the great work! Consistency is key to building momentum.";
+    console.error('Error generating weekly insight:', error);
+    return 'An error occurred while generating your insight. Keep up the great work!';
   }
 };
 
-export const generateSquadInvitationEmail = async (squadName: string, inviterName: string, goalIdentity: string, language: string): Promise<{ subject: string; body: string; }> => {
+export const generateDebriefQuestionsAndWin = async (
+    habitsToday: { title: string; completed: boolean }[],
+    privateNote: string,
+    language: string
+): Promise<{ questions: string[]; shareableWin: string }> => {
+    const prompt = `
+      You are a compassionate journal guide. Based on the user's completed/missed habits for today, generate 2-3 thoughtful, open-ended reflection questions.
+      Then, based on the completed habits and the user's private notes, generate one positive, shareable "win" for the day (1 sentence) that they could share with their support squad.
+
+      Today's Habits:
+      ${habitsToday.map(h => `- ${h.title}: ${h.completed ? 'Completed' : 'Missed'}`).join('\n')}
+
+      User's Private Note: "${privateNote}"
+
+      Respond in the language with this code: ${language}.
+    `;
+
     try {
-        const prompt = `Generate a short, exciting, and friendly email to invite someone to join a small accountability group called a "Squad".
-        Squad Name: "${squadName}"
-        Inviter's First Name: ${inviterName}
-        Squad's Shared Goal: Becoming a "${goalIdentity}"
-        The app is called Momentum. The email should be persuasive and create a sense of shared purpose.
-        The response should be in ${language}.`;
-        
         const response = await ai.models.generateContent({
             model,
             contents: prompt,
             config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        subject: { type: Type.STRING },
-                        body: { type: Type.STRING }
-                    },
-                    required: ["subject", "body"]
-                }
-            }
-        });
-        
-        const jsonString = response.text.trim();
-        return JSON.parse(jsonString);
-    } catch (error) {
-        console.error("Error generating squad invitation email:", error);
-        return {
-            subject: `You're Invited to Join ${squadName}!`,
-            body: `Hey!\n\n${inviterName} has invited you to join their accountability squad, "${squadName}," on the Momentum app. We're all working towards becoming a ${goalIdentity} together.\n\nLet's build some momentum!\n\nBest,\n${inviterName}`
-        };
-    }
-};
-
-export const generateMembershipPitch = async (userName: string, squadName: string, goalIdentity: string, language: string): Promise<string> => {
-    try {
-        const prompt = `Generate a short, compelling pitch (max 50 words) for ${userName} to send when requesting to join the squad "${squadName}". The squad's goal is to become a "${goalIdentity}". The pitch should show enthusiasm and commitment. Respond in ${language}.`;
-        const response = await ai.models.generateContent({
-            model,
-            contents: prompt
-        });
-        return response.text.trim();
-    } catch (error) {
-        console.error("Error generating membership pitch:", error);
-        return `Hi team! I'm really passionate about becoming a ${goalIdentity} and I'd love to join your squad to share the journey and keep each other accountable.`;
-    }
-};
-
-
-export const generateDebriefQuestionsAndWin = async (habitsToday: {title: string, completed: boolean}[], privateNote: string, language: string): Promise<{ questions: string[], shareableWin: string }> => {
-    try {
-        const prompt = `A user is doing their daily debrief.
-        Today's habits: ${JSON.stringify(habitsToday)}.
-        Their private thoughts so far: "${privateNote}"
-        
-        Based on this, generate:
-        1. Two thoughtful, open-ended follow-up questions to help them reflect deeper on their day.
-        2. One concise, positive, "shareable win" (max 20 words) that they could post to their accountability squad.
-        
-        Respond in ${language}.`;
-
-        const response = await ai.models.generateContent({
-            model,
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
+                responseMimeType: 'application/json',
                 responseSchema: {
                     type: Type.OBJECT,
                     properties: {
@@ -133,61 +117,38 @@ export const generateDebriefQuestionsAndWin = async (habitsToday: {title: string
                         },
                         shareableWin: { type: Type.STRING }
                     },
-                    required: ["questions", "shareableWin"]
+                    required: ['questions', 'shareableWin']
                 }
             }
         });
 
-        const jsonString = response.text.trim();
-        const result = JSON.parse(jsonString);
-        if (result.questions.length < 2) {
-           result.questions.push("What's one thing you can do to make tomorrow even better?");
-        }
-        return {
-            questions: result.questions.slice(0, 2),
-            shareableWin: result.shareableWin,
-        };
-
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText);
     } catch (error) {
-        console.error("Error generating debrief questions:", error);
+        console.error('Error generating debrief questions:', error);
         return {
             questions: [
-                "What was the biggest challenge you faced today?",
-                "What are you most grateful for from today's experiences?",
+                "What was one highlight from your day?",
+                "Is there anything you would do differently tomorrow?"
             ],
-            shareableWin: "Made some progress today! Looking forward to crushing it again tomorrow."
+            shareableWin: "I made progress on my goals today!"
         };
     }
 };
 
-export const generateSquadHuddlePrompt = async (squadName: string, goalIdentity: string, recentRipples: Ripple[], language: string): Promise<string> => {
+export const generateAssistMessages = async (
+    requesterName: string,
+    requesterIdentity: string,
+    habitTitle: string,
+    language: string
+): Promise<string[]> => {
+    const prompt = `
+      You are a supportive friend in a habit-building app. Your friend ${requesterName}, who is building their identity as "The ${requesterIdentity}", has requested assistance with their habit: "${habitTitle}".
+      Generate 3 distinct, short, encouraging messages (1 sentence each) they could send. The messages should be empathetic and motivational.
+      Respond in the language with this code: ${language}.
+    `;
+
     try {
-        const rippleSummary = recentRipples.map(r => ` - ${r.authorName}: ${r.message}`).join('\n');
-        const context = recentRipples.length > 0 ? `Here's what the squad has been up to:\n${rippleSummary}` : "The squad has been a bit quiet lately.";
-
-        const prompt = `You are the AI Co-Captain for a squad named "${squadName}" whose goal is to become a "${goalIdentity}".
-        
-        ${context}
-        
-        Based on this, generate one engaging, open-ended "Squad Huddle" question (max 25 words) to post in the chat. Make it encouraging and focused on either celebrating wins, overcoming obstacles, or re-engaging the team. Start the message with "Huddle time!".
-        
-        Respond in ${language}.`;
-
-        const response = await ai.models.generateContent({
-            model,
-            contents: prompt
-        });
-        return response.text.trim();
-    } catch (error) {
-        console.error("Error generating squad huddle prompt:", error);
-        return "Huddle time! What's one thing we can all do today to move closer to our goal?";
-    }
-};
-
-export const generateAssistMessages = async (requesterName: string, requesterIdentity: string, habitTitle: string, language: string): Promise<string[]> => {
-    try {
-        const prompt = `A user named ${requesterName}, who is striving to be a "${requesterIdentity}", is struggling with their habit "${habitTitle}" and has asked for help. Generate 3 short, distinct, and encouraging messages (max 15 words each) that a teammate could send them. The tone should be supportive, not demanding. Respond in ${language}.`;
-        
         const response = await ai.models.generateContent({
             model,
             contents: prompt,
@@ -195,19 +156,20 @@ export const generateAssistMessages = async (requesterName: string, requesterIde
                 responseMimeType: "application/json",
                 responseSchema: {
                     type: Type.ARRAY,
-                    items: { type: Type.STRING },
-                },
-            },
+                    items: {
+                        type: Type.STRING
+                    }
+                }
+            }
         });
-
-        const jsonString = response.text.trim();
-        return JSON.parse(jsonString);
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText);
     } catch (error) {
-        console.error("Error generating assist messages:", error);
+        console.error('Error generating assist messages:', error);
         return [
-            `You've got this, ${requesterName}! One step at a time.`,
-            `Remember why you started, ${requesterIdentity}! We're here for you.`,
-            `Keep pushing! Your progress inspires us all.`
+            `You've got this, ${requesterName}!`,
+            `Keep pushing towards your goal!`,
+            `One step at a time makes a big difference.`
         ];
     }
 };

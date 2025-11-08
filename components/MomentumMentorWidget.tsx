@@ -21,8 +21,12 @@ export const MomentumMentorWidget: React.FC<MomentumMentorWidgetProps> = ({ inte
       <div className="md:flex gap-6 items-center">
         <div className="flex-grow">
           <p className="text-brand-text-muted italic">"{intervention.message}"</p>
+          <div className="mt-4 bg-brand-bg border border-brand-secondary p-3 rounded-lg">
+            <p className="text-sm text-brand-text-muted">Suggestion:</p>
+            <p className="font-semibold text-brand-text">{intervention.microHabit.title}</p>
+          </div>
         </div>
-        <div className="flex-shrink-0 mt-4 md:mt-0 flex flex-col gap-2 items-stretch">
+        <div className="flex-shrink-0 mt-4 md:mt-0 flex flex-col gap-2 items-stretch md:w-52">
             <button 
                 onClick={() => onAccept(intervention.habitId, intervention.microHabit)}
                 className="bg-brand-primary text-white font-bold py-3 px-6 rounded-full text-base hover:bg-opacity-80 transition-colors duration-300 w-full"

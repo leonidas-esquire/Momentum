@@ -1,10 +1,10 @@
 {
   "onboarding": {
     "userInfo": {
-      "title": "Cuéntanos sobre ti",
-      "subtitle": "Esto nos ayuda a personalizar tu viaje.",
-      "namePlaceholder": "Tu nombre",
-      "emailPlaceholder": "Tu correo electrónico"
+      "title": "Háblanos de ti",
+      "subtitle": "Vamos a configurar tu perfil.",
+      "namePlaceholder": "Tu Nombre",
+      "emailPlaceholder": "Tu Correo Electrónico"
     },
     "consent": {
       "prefix": "Acepto la",
@@ -14,222 +14,180 @@
     },
     "buttons": {
       "next": "Siguiente",
-      "adopt": "Adoptar {{count}} hábitos",
+      "adopt": "Adoptar {{count}} Hábitos",
       "continue": "Continuar",
       "noThanks": "No, gracias",
-      "generate": "Generar plan",
-      "finish": "Finalizar y empezar"
+      "generate": "Generar Ideas",
+      "finish": "Finalizar Configuración"
     },
     "identity": {
-      "title": "Elige tu identidad",
-      "subtitle": "Selecciona un arquetipo que quieras encarnar. (¡Actualiza para más!)"
+      "title": "Elige Tu Identidad",
+      "subtitle": "Selecciona una identidad para empezar. ¿En quién te estás convirtiendo?"
     },
     "blueprint": {
       "loadingTitle": "Creando tu plan...",
-      "loadingSubtitle": "Nuestra IA está diseñando hábitos personalizados solo para ti.",
-      "resultsTitle": "Tu plan de identidad",
-      "resultsSubtitle": "Selecciona los hábitos que quieres adoptar. ¡Son solo sugerencias!",
-      "promptTitle": "Plan de hábitos con IA",
-      "promptSubtitle": "¿Quieres algunas sugerencias generadas por IA para empezar?"
+      "loadingSubtitle": "Nuestra IA está diseñando hábitos solo para ti.",
+      "resultsTitle": "Tu Plan de Hábitos",
+      "resultsSubtitle": "Selecciona los hábitos que quieres adoptar.",
+      "promptTitle": "Plan de Hábitos con IA",
+      "promptSubtitle": "Deja que nuestra IA sugiera algunos hábitos iniciales basados en tu identidad elegida."
     },
     "lossFraming": {
-      "header": "Paso {{current}} de {{total}}: El/La {{name}}",
+      "header": "{{current}}/{{total}}: El/La {{name}}",
       "title": "¿Cuál es el costo de la inacción?",
-      "placeholder": "Ej: \"Si no me convierto en un Creador, nunca terminaré mi libro y siempre me arrepentiré...\""
+      "placeholder": "Ej: 'Si no construyo esta identidad, me perderé la realización creativa y mis ideas nunca verán la luz...'"
     },
     "statement": {
-      "title": "Crea tus declaraciones de identidad"
+      "title": "Crea Tus Declaraciones de Identidad"
     }
   },
   "habitBuilder": {
-    "title": "Crear un nuevo hábito",
-    "question1": "¿Qué quieres hacer de forma consistente?",
-    "placeholder1": "Ej: Escribir durante 15 minutos",
+    "title": "Crear un Nuevo Hábito",
+    "question1": "¿Qué quieres hacer?",
+    "placeholder1": "Ej: Escribir 500 palabras",
     "placeholder2": "Descripción (opcional)",
-    "question2": "¿Qué identidad refuerza esto?",
-    "question3": "¿Cuándo lo harás? (La señal)",
+    "question2": "¿Qué identidad construye esto?",
+    "question3": "¿Cuándo lo harás?",
     "cueMorning": "Por la mañana",
     "cueWorkout": "Después de mi entrenamiento",
-    "cueLunch": "Durante mi descanso para comer",
+    "cueLunch": "Durante mi almuerzo",
     "cueBed": "Antes de dormir",
-    "button": "Añadir hábito"
+    "button": "Añadir Hábito"
   },
   "dashboard": {
-    "header": {
-      "title": "Bienvenido, {{name}}",
-      "weeklyReview": "Resumen semanal",
-      "upgrade": "Actualizar a Pro"
-    },
+    "debriefedButton": "Resumen Hecho",
+    "debriefButton": "Resumen Diario",
+    "welcome": "Bienvenido de nuevo, {{name}}.",
     "identity": {
-      "title": "Tus identidades"
+      "title": "Tus Identidades"
     },
-    "empty": {
-      "title": "Tu lienzo está en blanco.",
-      "message": "Es hora de construir el primer hábito de tu nueva identidad.",
-      "button": "Crear primer hábito"
-    },
-    "focus": {
-      "title": "Enfoque de hoy"
-    },
-    "time": {
-      "morning": "Mañana",
-      "afternoon": "Tarde",
-      "evening": "Noche"
+    "habits": {
+      "title": "Tus Hábitos",
+      "weeklyReview": "Revisión Semanal",
+      "add": "Añadir un nuevo hábito"
     },
     "mission": {
       "title": "Misión de Momentum",
-      "targetHabit": "Hábito objetivo: {{habitTitle}}",
+      "targetHabit": "Hábito Objetivo: {{habitTitle}}",
       "completions": "Completados"
     },
     "mentorWidget": {
-        "title": "Mentor de Momentum",
-        "acceptButton": "¡Probémoslo!",
-        "dismissButton": "No, gracias"
+      "title": "Rincón del Mentor",
+      "acceptButton": "Aceptar Micro-Hábito",
+      "dismissButton": "Omitir por hoy"
     },
     "assist": {
-        "requestButton": "Pedir Ayuda",
-        "requestButtonTooltip": "¡Pide a tu squad un impulso de motivación!",
-        "offerButton": "Ofrecer Ayuda",
-        "modalTitle": "Ofrecer Ayuda a {{name}}",
-        "modalSubtitle": "Nuestra IA ha redactado algunos mensajes para ayudarte a animarlo/a. ¡Elige uno o escribe el tuyo!",
-        "loading": "Generando ánimos...",
-        "customPlaceholder": "O escribe tu propio mensaje...",
-        "sendButton": "Enviar Impulso"
+      "modalTitle": "Ayuda a {{name}}",
+      "modalSubtitle": "Envíale un mensaje rápido y alentador para ayudarle a volver al buen camino.",
+      "loading": "Generando sugerencias inteligentes...",
+      "customPlaceholder": "O escribe tu propio mensaje...",
+      "sendButton": "Enviar Ánimo"
+    }
+  },
+  "squadHub": {
+    "sharedMomentum": "Momentum Compartido",
+    "tabs": {
+      "quests": "Misiones",
+      "saga": "Saga",
+      "chat": "Chat",
+      "members": "Miembros"
+    },
+    "questCompletedBy": "Completado por {{name}}",
+    "questCompleteButton": "Completar",
+    "huddle": {
+      "title": "Logro del Huddle Diario Compartido"
+    },
+    "chatPlaceholder": "Enviar un mensaje...",
+    "saga": {
+        "milestones": "Hitos",
+        "boss": "Jefe de la Saga",
+        "yourCharges": "Tus Cargas de Momentum",
+        "contributeButton": "Contribuir Carga"
+    }
+  },
+  "teamHub": {
+    "title": "Centro de Equipo",
+    "challengeTitle": "Desafío Activo",
+    "leaderboardTitle": "Clasificación del Equipo",
+    "rank": "Rango",
+    "member": "Miembro",
+    "completions": "Completados"
+  },
+  "adminDashboard": {
+    "statsTitle": "Estadísticas del Equipo",
+    "totalMembers": "Miembros Totales",
+    "activeMembers": "Activos en los últimos 7 días",
+    "completionRate": "Tasa de Finalización Promedio",
+    "membersTitle": "Gestionar Miembros",
+    "remove": "Eliminar",
+    "inviteMember": "Invitar Nuevo Miembro",
+    "challengesTitle": "Gestionar Desafíos",
+    "challengeForm": {
+      "titlePlaceholder": "Título del Desafío",
+      "descriptionPlaceholder": "Descripción (opcional)",
+      "habitCategoryPlaceholder": "Identidad Objetivo (ej: Creador)",
+      "target": "Objetivo de Finalizaciones",
+      "createButton": "Crear Desafío"
     }
   },
   "settings": {
     "title": "Configuración",
     "language": "Idioma",
-    "voice": "Preferencia de voz de IA",
-    "privacy": "Privacidad",
+    "voice": "Preferencia de Voz de IA",
+    "privacy": "Privacidad y Datos",
     "viewPolicy": "Ver Política de Privacidad",
-    "deleteAccount": "Zona de peligro",
-    "deleteWarning": "Esto eliminará permanentemente tu cuenta y todos tus datos. Esta acción no se puede deshacer.",
+    "deleteAccount": "Eliminar Cuenta",
+    "deleteWarning": "Esto eliminará permanentemente tu cuenta y todos los datos asociados. Esta acción no se puede deshacer.",
     "cancel": "Cancelar",
-    "confirmDelete": "Sí, estoy seguro",
-    "deleteButton": "Eliminar mi cuenta"
-  },
-  "dailyDebrief": {
-    "title": "Resumen diario",
-    "promptTitle": "¡Hora de tu resumen diario!",
-    "promptSubtitle": "Tómate un momento para reflexionar sobre tu día y consolidar tus victorias.",
-    "promptButton": "Empezar resumen",
-    "step1Title": "¿Primero, qué tal tu día en general?",
-    "step2Title": "Reflexionemos un poco más...",
-    "loading": "Generando preguntas reflexivas...",
-    "buttonNext": "Siguiente",
-    "step3Title": "¿Algún pensamiento privado?",
-    "step3Placeholder": "Esto es solo para ti. Nadie más lo verá.",
-    "step4Title": "¿Compartir una victoria con tu Squad?",
-    "step4Subtitle": "Tu IA redactó esto basándose en tu día. ¡Siéntete libre de editarlo!",
-    "buttonSave": "Guardar en privado",
-    "buttonShare": "Guardar y compartir"
-  },
-  "dailyHuddle": {
-      "oneThing": "Tu única cosa para hoy"
-  },
-  "squadHub": {
-      "upgradeTitle": "Desbloquea tu Squad",
-      "upgradeMessage": "Une fuerzas con otros para construir momentum juntos. Los Squads son una función Pro.",
-      "upgradeButton": "Hazte Pro y forma un Squad",
-      "noSquadTitle": "Une tu Momentum",
-      "noSquadMessage": "Crea o únete a un squad para mantenerse responsables mutuamente y alcanzar juntos sus metas de identidad compartidas.",
-      "createButton": "Crear un Squad",
-      "joinButton": "Unirse a un Squad",
-      "suggestionsTitle": "Squads sugeridos",
-      "inviteButton": "Invitar",
-      "chatPlaceholder": "Enviar un mensaje...",
-      "tabs": {
-          "ripples": "Ecos",
-          "chat": "Chat",
-          "saga": "Saga",
-          "quests": "Misiones"
-      },
-      "saga": {
-          "milestones": "Hitos",
-          "boss": "Desafío Final",
-          "yourCharges": "Tus Cargas de Momentum",
-          "contributeButton": "Contribuir Momentum"
-      },
-      "questCompletedBy": "Completado por {{name}}",
-      "questCompleteButton": "Completar",
-      "huddle": {
-          "title": "Huddle de Squad"
-      },
-      "nameChangeVote": {
-        "title": "Votación de cambio de nombre",
-        "proposedBy": "Propuesto por {{name}}",
-        "votes": "{{count}} / {{required}} votos",
-        "voteButton": "Votar para aprobar",
-        "cancel": "Cancelar",
-        "propose": "Proponer"
-      }
-  },
-  "upgradeModal": {
-      "title": "Desbloquea Momentum Pro",
-      "reason": {
-          "habit": "El plan gratuito está limitado a 5 hábitos.",
-          "identity": "El plan gratuito está limitado a 1 identidad.",
-          "translation": "Las funciones de IA tienen un límite diario en el plan gratuito."
-      },
-      "feature1": "Hábitos e identidades ilimitados",
-      "feature1Desc": "Encarna múltiples facetas de en quién te estás convirtiendo.",
-      "feature2": "Squads de responsabilidad",
-      "feature2Desc": "Une fuerzas con otros para un momentum compartido.",
-      "feature3": "Funciones avanzadas de IA",
-      "feature3Desc": "Desbloquea interacciones de voz y traducciones ilimitadas.",
-      "feature4": "Escudos de Momentum",
-      "feature4Desc": "Protege tus rachas ganadas con esfuerzo en los días que falles.",
-      "cta": "Actualizar ahora - 9,99 $/mes",
-      "close": "Quizás más tarde"
-  },
-  "teamHub": {
-      "title": "Centro de Equipo",
-      "challengeTitle": "Desafío activo",
-      "leaderboardTitle": "Tabla de clasificación",
-      "rank": "Rango",
-      "member": "Miembro",
-      "completions": "Completados"
-  },
-  "adminDashboard": {
-      "statsTitle": "Rendimiento del equipo",
-      "totalMembers": "Miembros totales",
-      "activeMembers": "Activos en los últimos 7 días",
-      "completionRate": "Tasa de finalización prom.",
-      "membersTitle": "Gestionar miembros",
-      "remove": "Eliminar",
-      "inviteMember": "Invitar nuevo miembro",
-      "challengesTitle": "Gestionar desafíos",
-      "challengeForm": {
-          "titlePlaceholder": "Título del desafío",
-          "descriptionPlaceholder": "Descripción (opcional)",
-          "habitCategoryPlaceholder": "Ej: 'Escritura', 'Fitness'",
-          "target": "Objetivo de finalizaciones",
-          "createButton": "Crear desafío"
-      }
+    "confirmDelete": "Sí, Eliminar",
+    "deleteButton": "Eliminar Mi Cuenta"
   },
   "privacyPolicy": {
-      "title": "Política de Privacidad",
-      "close": "Cerrar"
+    "title": "Política de Privacidad",
+    "close": "Cerrar"
+  },
+  "dailyDebrief": {
+    "title": "Resumen Diario",
+    "step1Title": "¿Qué tal tu día?",
+    "step2Title": "Reflexión Guiada",
+    "loading": "Generando tus preguntas...",
+    "buttonNext": "Siguiente",
+    "step3Title": "Nota Privada",
+    "step3Placeholder": "¿Algún pensamiento privado que quieras anotar? Solo tú verás esto.",
+    "step4Title": "Comparte un Logro",
+    "step4Subtitle": "¡Comparte un logro con tu escuadrón para contribuir al Huddle Diario!",
+    "buttonSave": "Guardar para Mí",
+    "buttonShare": "Compartir con Escuadrón"
   },
   "financialsWidget": {
-      "title": "Panel de negocios",
-      "revenue": "Ingresos mensuales",
-      "costs": "Costos mensuales",
-      "net": "Beneficio/Pérdida neta",
-      "profitabilityGoal": "Progreso hacia la rentabilidad",
-      "loss": "Pérdida",
-      "profitable": "Rentable",
-      "breakEven": "Punto de equilibrio"
+    "title": "Finanzas del Equipo (Admin)",
+    "revenue": "Ingresos Mensuales",
+    "costs": "Costos Mensuales",
+    "net": "Beneficio Neto",
+    "loss": "Pérdida",
+    "profitable": "Rentable",
+    "breakEven": "Punto de Equilibrio",
+    "profitabilityGoal": "Camino a la Rentabilidad"
   },
-  "chapterUnlock": {
-      "title": "¡Capítulo desbloqueado!",
-      "subtitle": "¡Has alcanzado el Nivel {{newLevel}} como {{identityName}}!",
-      "loreTitle": "La historia hasta ahora...",
-      "missionTitle": "Nueva Misión de Maestría",
-      "missionAccepted": "¡Misión aceptada!",
-      "missionAccept": "Aceptar misión",
-      "evolveTitle": "Evoluciona tu hábito",
-      "continueButton": "Continúa tu viaje"
+  "upgradeModal": {
+    "reason": {
+      "habit": "El plan gratuito está limitado a 5 hábitos.",
+      "identity": "El plan gratuito está limitado a 1 identidad.",
+      "translation": "Desbloquea traducciones ilimitadas con IA."
+    },
+    "title": "Actualizar a Momentum Pro",
+    "feature1": "Hábitos e Identidades Ilimitados",
+    "feature1Desc": "Nunca limites tu crecimiento. Añade tantos hábitos e identidades como necesites.",
+    "feature2": "Desbloquea Escuadrones y Equipos",
+    "feature2Desc": "Une fuerzas con otros para responsabilidad social y metas más grandes.",
+    "feature3": "Funciones Avanzadas de IA",
+    "feature3Desc": "Accede a voces de IA premium y a información de rendimiento más profunda.",
+    "feature4": "Escudo Momentum Pro",
+    "feature4Desc": "Consigue más escudos para proteger tus rachas cuando la vida se interponga.",
+    "cta": "Desbloquear Todas las Funciones",
+    "close": "Quizás Más Tarde"
+  },
+  "dailyHuddle": {
+      "oneThing": "Tu Única Cosa Hoy"
   }
 }

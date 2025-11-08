@@ -189,7 +189,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ user, habits, onClose, mode = 
       inputAudioContext?.close();
       outputAudioContext?.close();
     };
-  }, [user, habits]);
+  }, [user, habits, mode, huddleData, onHuddleComplete, t]);
 
   const getStatusText = () => {
     switch(status) {

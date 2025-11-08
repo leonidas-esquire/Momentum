@@ -1,144 +1,71 @@
 import React, { useState } from 'react';
 import { Habit } from '../types';
 import { Icon } from './Icon';
-import { playCompletionSound, triggerVibration } from '../utils/feedback';
+import { isToday } from '../utils/date';
+import { triggerVibration, playCompletionSound } from '../utils/feedback';
 
 interface HabitCardProps {
   habit: Habit;
-  onComplete: (habitId: string) => void;
-  onDelete: (habitId: string) => void;
-  onSetPriority: (habitId: string) => void;
-  isCompletedToday: boolean;
-  isPriority: boolean;
+  onComplete: (id: string) => void;
+  onUndo: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-const Confetti: React.FC = () => (
-  <>
-    {[...Array(10)].map((_, i) => (
-      <div
-        key={i}
-        className="absolute w-2 h-2 bg-brand-primary rounded-full animate-confetti-burst"
-        style={{
-          left: '50%',
-          top: '50%',
-          transform: `rotate(${Math.random() * 360}deg) translateX(${Math.random() * 50}px)`,
-          animationDelay: `${Math.random() * 0.2}s`,
-          backgroundColor: ['#8A42D6', '#22C55E', '#F97316', '#3b82f6'][Math.floor(Math.random() * 4)],
-        }}
-      />
-    ))}
-  </>
-);
+export const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onUndo, onDelete }) => {
+  const [isCompleted, setIsCompleted] = useState(isToday(habit.lastCompleted));
 
-
-export const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onDelete, onSetPriority, isCompletedToday, isPriority }) => {
-  const { title, description, identityTag, cue, streak, momentumShields, comebackChallenge, microVersion } = habit;
-  const [isCelebrating, setIsCelebrating] = useState(false);
-
-  const handleComplete = (id: string) => {
-    if (isCompletedToday || isCelebrating) return;
-
-    setIsCelebrating(true);
-    playCompletionSound();
+  const handleComplete = () => {
+    onComplete(habit.id);
+    setIsCompleted(true);
     triggerVibration();
-
-    setTimeout(() => {
-      onComplete(id);
-      setIsCelebrating(false);
-    }, 800); // Match confetti animation duration
+    playCompletionSound();
   };
-
-
-  if (comebackChallenge?.isActive) {
-      return (
-        <div className={`relative bg-brand-warning/10 border-2 border-dashed border-brand-warning rounded-xl p-4 md:p-6 flex items-center justify-between transition-all duration-300`}>
-             <div className="flex-grow">
-                <div className="flex items-center gap-2 mb-2">
-                   <Icon name="arrow-uturn-left" className="w-5 h-5 text-brand-warning" />
-                   <span className="text-brand-warning text-sm font-bold uppercase tracking-wider">Comeback Challenge</span>
-                </div>
-                <p className="text-lg font-semibold text-brand-text">{title}</p>
-                <p className="text-sm text-brand-text-muted mt-1">
-                    Complete this for <span className="font-bold text-white">{comebackChallenge.daysRemaining} more day(s)</span> to restore your {comebackChallenge.originalStreak}-day streak!
-                </p>
-             </div>
-              <button
-                onClick={() => handleComplete(habit.id)}
-                disabled={isCompletedToday || isCelebrating}
-                className={`relative w-16 h-16 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-300 transform
-                    ${isCompletedToday 
-                    ? 'bg-brand-safe text-white scale-100' 
-                    : 'bg-brand-warning text-white hover:bg-opacity-80 hover:scale-110'}`}
-                aria-label={`Complete habit for comeback: ${title}`}
-                >
-                <Icon name="check" className="w-8 h-8" />
-                {isCelebrating && <Confetti />}
-            </button>
-        </div>
-      );
-  }
-
+  
+  const handleUndo = () => {
+    onUndo(habit.id);
+    setIsCompleted(false);
+  };
+  
   return (
-    <div className={`bg-brand-surface border border-brand-secondary rounded-xl p-4 md:p-6 flex items-center justify-between transition-all duration-300 ${isCompletedToday ? 'opacity-50' : ''}`}>
-      <div className="flex-grow">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="bg-brand-primary/10 text-brand-primary text-xs font-semibold px-2 py-1 rounded-full">{identityTag}</span>
-          <span className="text-xs text-brand-text-muted">{cue}</span>
-        </div>
-        {microVersion ? (
-            <div>
-                 <p className="text-lg font-semibold text-brand-primary">{microVersion.title}</p>
-                 <p className="text-sm text-brand-text-muted mt-1 line-through">{title}</p>
-            </div>
-        ) : (
-            <p className="text-lg font-semibold text-brand-text">{title}</p>
-        )}
-        
-        {description && !microVersion && (
-          <p className="text-sm text-brand-text-muted mt-1">{description}</p>
-        )}
-        <div className="flex items-center gap-4 mt-2 text-brand-text-muted">
-            <div className="flex items-center gap-1">
-                <Icon name="fire" className="w-5 h-5 text-brand-warning" />
-                <span className="font-bold text-lg text-brand-text">{streak}</span>
-                <span className="text-sm"> day streak</span>
-            </div>
-            {(momentumShields > 0) && (
-                 <div className="flex items-center gap-1" title={`${momentumShields} Momentum Shield(s) available`}>
-                    <Icon name="shield" solid className="w-5 h-5 text-brand-safe" />
-                    <span className="font-bold text-lg text-brand-text">{momentumShields}</span>
+    <div className={`bg-brand-surface border-l-4 rounded-r-lg p-4 flex items-center gap-4 transition-all duration-300 ${isCompleted ? 'border-brand-safe opacity-60' : 'border-brand-primary'}`}>
+        <div className="flex-grow">
+            <p className="font-bold text-lg text-brand-text">{habit.title}</p>
+            {habit.description && <p className="text-sm text-brand-text-muted">{habit.description}</p>}
+            <div className="flex items-center gap-4 mt-2 text-sm text-brand-text-muted">
+                <div className="flex items-center gap-1">
+                    <Icon name="fire" className={`w-4 h-4 ${habit.streak > 0 ? 'text-brand-warning' : ''}`} />
+                    <span>{habit.streak} Day Streak</span>
                 </div>
+                <div className="flex items-center gap-1">
+                    <Icon name="shield" className={`w-4 h-4 ${habit.momentumShields > 0 ? 'text-brand-safe' : ''}`} />
+                    <span>{habit.momentumShields} Shields</span>
+                </div>
+                {habit.missedDays > 0 && !isCompleted && (
+                    <div className="flex items-center gap-1 text-brand-danger">
+                        <Icon name="trending-down" className="w-4 h-4" />
+                        <span>Missed {habit.missedDays} {habit.missedDays > 1 ? 'days' : 'day'}</span>
+                    </div>
+                )}
+            </div>
+        </div>
+        <div className="flex-shrink-0">
+            {isCompleted ? (
+                <button
+                    onClick={handleUndo}
+                    className="w-16 h-16 bg-brand-safe/20 rounded-full flex flex-col items-center justify-center text-brand-safe hover:bg-brand-safe/30 transition-colors"
+                >
+                    <Icon name="check" className="w-8 h-8" />
+                    <span className="text-xs font-bold">DONE</span>
+                </button>
+            ) : (
+                <button
+                    onClick={handleComplete}
+                    className="w-16 h-16 bg-brand-secondary rounded-full flex items-center justify-center text-white hover:bg-brand-primary transition-colors"
+                >
+                    <Icon name="plus" className="w-8 h-8" />
+                </button>
             )}
         </div>
-      </div>
-      <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-         <button
-          onClick={() => onSetPriority(habit.id)}
-          className={`p-2 rounded-full transition-colors duration-200 ${isPriority ? 'text-yellow-400 hover:text-yellow-500' : 'text-brand-text-muted hover:text-yellow-400'}`}
-          aria-label={`Set as priority: ${title}`}
-        >
-          <Icon name="star" solid={isPriority} className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => onDelete(habit.id)}
-          className="text-brand-text-muted hover:text-brand-danger p-2 rounded-full hover:bg-brand-danger/10 transition-colors duration-200"
-          aria-label={`Delete habit: ${title}`}
-        >
-          <Icon name="trash" className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => handleComplete(habit.id)}
-          disabled={isCompletedToday || isCelebrating}
-          className={`relative w-16 h-16 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-300 transform
-            ${isCompletedToday 
-              ? 'bg-brand-safe text-white scale-100' 
-              : 'bg-brand-bg border-2 border-brand-secondary text-brand-text-muted hover:bg-brand-primary hover:border-brand-primary hover:text-white hover:scale-110'}`}
-          aria-label={`Complete habit: ${title}`}
-        >
-          <Icon name="check" className={`w-8 h-8 transition-transform duration-200 ${isCelebrating ? 'scale-125' : 'scale-100'}`} />
-          {isCelebrating && <Confetti />}
-        </button>
-      </div>
     </div>
   );
 };
