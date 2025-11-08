@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { User, Identity } from '../types';
 import { IDENTITY_ARCHETYPES } from '../constants';
@@ -8,7 +7,7 @@ interface OnboardingProps {
   onComplete: (user: User) => void;
 }
 
-type OnboardingStep = 'welcome' | 'identity-select' | 'loss-framing' | 'statement' | 'complete';
+type OnboardingStep = 'welcome' | 'user-info' | 'identity-select' | 'loss-framing' | 'statement' | 'complete';
 
 const IdentityCard: React.FC<{
     identity: Identity;
@@ -32,6 +31,8 @@ const IdentityCard: React.FC<{
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [step, setStep] = useState<OnboardingStep>('welcome');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [selectedIdentities, setSelectedIdentities] = useState<Identity[]>([]);
   const [currentLossFramingIndex, setCurrentLossFramingIndex] = useState(0);
   const [lossFramingAnswers, setLossFramingAnswers] = useState<Record<string, string>>({});
@@ -61,12 +62,49 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             <p className="text-xl md:text-2xl text-brand-text-muted mb-8">The app that makes you miss it when you skip it.</p>
             <h2 className="text-2xl md:text-3xl font-semibold mb-8">First, let's answer a simple question:</h2>
             <p className="text-3xl md:text-4xl font-bold text-brand-primary mb-10">"Who are you becoming?"</p>
-            <button onClick={() => setStep('identity-select')} className="bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto">
+            <button onClick={() => setStep('user-info')} className="bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto">
               Let's Begin <Icon name="arrow-right" className="w-5 h-5" />
             </button>
           </div>
         );
       
+      case 'user-info':
+        return (
+          <div className="text-center animate-fade-in max-w-md mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">Let's get to know you</h2>
+            <p className="text-brand-text-muted mb-8">Create your account to save your progress.</p>
+            <form onSubmit={(e) => { e.preventDefault(); setStep('identity-select'); }} className="space-y-6">
+              <div>
+                <input
+                  type="text"
+                  placeholder="Your Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-brand-surface border border-brand-secondary rounded-lg p-4 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <input
+                  type="email"
+                  placeholder="Your Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-brand-surface border border-brand-secondary rounded-lg p-4 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
+                  required
+                />
+              </div>
+              <button 
+                type="submit"
+                disabled={!name.trim() || !email.trim()}
+                className="w-full bg-brand-primary text-white font-bold py-3 px-8 rounded-full text-lg disabled:bg-brand-secondary disabled:cursor-not-allowed hover:bg-opacity-80 transition-colors duration-300 flex items-center justify-center gap-2 mx-auto"
+              >
+                Next <Icon name="arrow-right" className="w-5 h-5" />
+              </button>
+            </form>
+          </div>
+        );
+
       case 'identity-select':
         return (
           <div className="animate-fade-in">
@@ -138,7 +176,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                    <button 
                       onClick={() => {
                           const newUser: User = {
-                              name: 'User',
+                              name,
+                              email,
                               selectedIdentities,
                               identityStatements,
                               onboardingCompleted: true,

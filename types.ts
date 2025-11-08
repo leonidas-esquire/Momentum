@@ -6,6 +6,14 @@ export interface Identity {
   image: string;
 }
 
+export interface User {
+  name: string;
+  email: string;
+  selectedIdentities: Identity[];
+  identityStatements: Record<string, string>;
+  onboardingCompleted: boolean;
+}
+
 export interface Habit {
   id: string;
   title: string;
@@ -13,15 +21,6 @@ export interface Habit {
   cue: string;
   streak: number;
   longestStreak: number;
-  lastCompleted: string | null; // ISO string
-  completions: string[]; // Array of ISO strings
+  lastCompleted: string | null; // ISO date string
+  completions: string[]; // Array of ISO date strings
 }
-
-export interface User {
-  name: string;
-  selectedIdentities: Identity[];
-  identityStatements: Record<string, string>;
-  onboardingCompleted: boolean;
-}
-
-export type AppState = 'ONBOARDING' | 'DASHBOARD' | 'HABIT_BUILDER' | 'WEEKLY_REVIEW';

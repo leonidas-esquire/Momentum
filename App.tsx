@@ -1,138 +1,120 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Onboarding } from './components/Onboarding';
 import { Dashboard } from './components/Dashboard';
-import { HabitBuilder } from './components/HabitBuilder';
-import { WeeklyReview } from './components/WeeklyReview';
-import { AppState, User, Habit } from './types';
-
-// Helper to check if a date was yesterday
-const isYesterday = (date1: Date, date2: Date): boolean => {
-    const prevDay = new Date(date1);
-    prevDay.setDate(date1.getDate() - 1);
-    return prevDay.getFullYear() === date2.getFullYear() &&
-           prevDay.getMonth() === date2.getMonth() &&
-           prevDay.getDate() === date2.getDate();
-}
+import { User, Habit } from './types';
 
 const App: React.FC = () => {
-    // Attempt to load state from localStorage, or use initial state
-    const [user, setUser] = useState<User | null>(() => {
-        const savedUser = localStorage.getItem('momentumUser');
-        return savedUser ? JSON.parse(savedUser) : null;
-    });
-    const [habits, setHabits] = useState<Habit[]>(() => {
-        const savedHabits = localStorage.getItem('momentumHabits');
-        return savedHabits ? JSON.parse(savedHabits) : [];
-    });
-    const [appState, setAppState] = useState<AppState>('ONBOARDING');
+  const [user, setUser] = useState<User | null>(null);
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-    // Persist state to localStorage whenever it changes
-    useEffect(() => {
-        if (user) localStorage.setItem('momentumUser', JSON.stringify(user));
-        localStorage.setItem('momentumHabits', JSON.stringify(habits));
-    }, [user, habits]);
+  useEffect(() => {
+    // Load from localStorage
+    try {
+      const storedUser = localStorage.getItem('momentum_user');
+      const storedHabits = localStorage.getItem('momentum_habits');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+      if (storedHabits) {
+        setHabits(JSON.parse(storedHabits));
+      }
+    } catch (error) {
+      console.error("Failed to load data from localStorage", error);
+    }
+    setIsLoaded(true);
+  }, []);
 
-    // Determine initial app state on load
-    useEffect(() => {
-        if (user?.onboardingCompleted) {
-            setAppState('DASHBOARD');
-        } else {
-            setAppState('ONBOARDING');
+  useEffect(() => {
+    // Save to localStorage
+    if (isLoaded) {
+      try {
+        if (user) {
+          localStorage.setItem('momentum_user', JSON.stringify(user));
         }
-    }, [user]);
+        localStorage.setItem('momentum_habits', JSON.stringify(habits));
+      } catch (error) {
+        console.error("Failed to save data to localStorage", error);
+      }
+    }
+  }, [user, habits, isLoaded]);
 
-    const handleOnboardingComplete = useCallback((completedUser: User) => {
-        setUser(completedUser);
-        setAppState('DASHBOARD');
-    }, []);
+  const handleOnboardingComplete = (newUser: User) => {
+    setUser(newUser);
+  };
 
-    const handleAddHabit = useCallback((newHabitData: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions'>) => {
-        const newHabit: Habit = {
-            ...newHabitData,
-            id: Date.now().toString(),
-            streak: 0,
-            longestStreak: 0,
-            lastCompleted: null,
-            completions: [],
-        };
-        setHabits(prevHabits => [...prevHabits, newHabit]);
-        setAppState('DASHBOARD');
-    }, []);
-
-    const handleCompleteHabit = useCallback((habitId: string) => {
-        setHabits(prevHabits => 
-            prevHabits.map(habit => {
-                if (habit.id === habitId) {
-                    const now = new Date();
-                    const today = now.toISOString().split('T')[0];
-                    const lastCompletedDate = habit.lastCompleted ? new Date(habit.lastCompleted) : null;
-
-                    if (habit.lastCompleted && new Date(habit.lastCompleted).toISOString().split('T')[0] === today) {
-                        return habit; // Already completed today
-                    }
-
-                    let newStreak = habit.streak;
-                    if (lastCompletedDate && isYesterday(now, lastCompletedDate)) {
-                        newStreak += 1; // It was completed yesterday, increment streak
-                    } else {
-                        newStreak = 1; // Streak broken or first time
-                    }
-                    
-                    const newLongestStreak = Math.max(habit.longestStreak, newStreak);
-
-                    return {
-                        ...habit,
-                        streak: newStreak,
-                        longestStreak: newLongestStreak,
-                        lastCompleted: now.toISOString(),
-                        completions: [...habit.completions, now.toISOString()],
-                    };
-                }
-                return habit;
-            })
-        );
-    }, []);
-    
-    const handleRemoveHabit = useCallback((habitId: string) => {
-        const habitToRemove = habits.find(h => h.id === habitId);
-        if (!habitToRemove) return;
-
-        const confirmationMessage = `Are you sure you want to remove the habit "${habitToRemove.title}"? This action cannot be undone and your streak of ${habitToRemove.streak} will be lost.`;
-
-        if (window.confirm(confirmationMessage)) {
-            setHabits(prevHabits => prevHabits.filter(habit => habit.id !== habitId));
-        }
-    }, [habits]);
-
-    const renderContent = () => {
-        switch (appState) {
-            case 'ONBOARDING':
-                return <Onboarding onComplete={handleOnboardingComplete} />;
-            case 'DASHBOARD':
-                if (!user) return <Onboarding onComplete={handleOnboardingComplete} />; // Failsafe
-                return <Dashboard 
-                            user={user} 
-                            habits={habits}
-                            onCompleteHabit={handleCompleteHabit}
-                            onRemoveHabit={handleRemoveHabit}
-                            onAddNewHabit={() => setAppState('HABIT_BUILDER')}
-                            onStartWeeklyReview={() => setAppState('WEEKLY_REVIEW')}
-                       />;
-            case 'HABIT_BUILDER':
-                 if (!user) return <Onboarding onComplete={handleOnboardingComplete} />;
-                 return <HabitBuilder 
-                            user={user}
-                            onAddHabit={handleAddHabit}
-                            onClose={() => setAppState('DASHBOARD')}
-                        />;
-            case 'WEEKLY_REVIEW':
-                return <WeeklyReview habits={habits} onClose={() => setAppState('DASHBOARD')} />
-            default:
-                return <div>Loading...</div>;
-        }
+  const handleAddHabit = (newHabit: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions'>) => {
+    const habitToAdd: Habit = {
+      ...newHabit,
+      id: new Date().toISOString() + Math.random(),
+      streak: 0,
+      longestStreak: 0,
+      lastCompleted: null,
+      completions: [],
     };
+    setHabits(prev => [...prev, habitToAdd]);
+  };
+  
+  const isSameDay = (d1: Date, d2: Date) => {
+      return d1.getFullYear() === d2.getFullYear() &&
+             d1.getMonth() === d2.getMonth() &&
+             d1.getDate() === d2.getDate();
+  };
 
-    return <div className="App">{renderContent()}</div>;
+  const handleCompleteHabit = (habitId: string) => {
+    setHabits(prev => prev.map(habit => {
+      if (habit.id === habitId) {
+        const today = new Date();
+        const todayStr = today.toISOString();
+        const lastCompletedDate = habit.lastCompleted ? new Date(habit.lastCompleted) : null;
+        
+        // If already completed today, do nothing.
+        if (lastCompletedDate && isSameDay(today, lastCompletedDate)) {
+            return habit;
+        }
+
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+
+        let newStreak = habit.streak;
+
+        if (lastCompletedDate && isSameDay(yesterday, lastCompletedDate)) {
+            newStreak += 1; // It was completed yesterday, so increment streak
+        } else {
+            newStreak = 1; // Reset streak
+        }
+        
+        const newLongestStreak = Math.max(habit.longestStreak, newStreak);
+
+        return {
+          ...habit,
+          streak: newStreak,
+          longestStreak: newLongestStreak,
+          lastCompleted: todayStr,
+          completions: [...habit.completions, todayStr],
+        };
+      }
+      return habit;
+    }));
+  };
+
+  const handleDeleteHabit = (habitId: string) => {
+    setHabits(prev => prev.filter(habit => habit.id !== habitId));
+  };
+
+  const handleUpdateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+  };
+
+  if (!isLoaded) {
+    return <div className="min-h-screen bg-brand-bg flex items-center justify-center"><p>Loading...</p></div>;
+  }
+  
+  if (user && user.onboardingCompleted) {
+    return <Dashboard user={user} habits={habits} onAddHabit={handleAddHabit} onCompleteHabit={handleCompleteHabit} onDeleteHabit={handleDeleteHabit} onUpdateUser={handleUpdateUser} />;
+  }
+  
+  return <Onboarding onComplete={handleOnboardingComplete} />;
 };
 
 export default App;
