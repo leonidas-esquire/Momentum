@@ -1,23 +1,68 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Squad, Ripple, User, JoinRequest, KickVote } from '../types';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { Squad, Ripple, User, JoinRequest, KickVote, Nudge, SquadQuest, ChatMessage } from '../types';
 import { Icon } from './Icon';
 import { generateSquadInsight, generateSquadRecruitmentMessage } from '../services/geminiService';
 import { findMatchingSquads, SQUAD_MEMBER_LIMIT } from '../services/squadService';
 import { LanguageContext } from '../contexts/LanguageContext';
+import { SquadQuestCard } from './SquadQuestCard';
+import { ChatInterface } from './ChatInterface';
 
 interface SquadHubProps {
   user: User;
+  isProUser: boolean;
   squad: Squad | null;
   allSquads: Squad[];
   ripples: Ripple[];
+  chatMessages: ChatMessage[];
   onOpenSquadBuilder: () => void;
   onOpenInviteModal: () => void;
   onOpenRequestModal: (squad: Squad) => void;
   onVoteOnRequest: (squadId: string, requestUserName: string, vote: 'approve' | 'deny') => void;
   onVoteToKick: (squadId: string, targetUserName: string) => void;
+  onNudge: (rippleId: string, message: string) => void;
+  onCompleteQuest: (squadId: string, questId: string) => void;
+  onSendChatMessage: (squadId: string, text: string) => void;
+  onTriggerUpgrade: (reason: string) => void;
 }
 
-const RippleItem: React.FC<{ ripple: Ripple }> = ({ ripple }) => {
+const NUDGE_OPTIONS = ["On fire! 🔥", "Inspiring ✨", "Momentum! 🚀", "Great work! 💪"];
+
+const NudgeSelector: React.FC<{
+    onSelect: (message: string) => void;
+    onClose: () => void;
+}> = ({ onSelect, onClose }) => {
+    const selectorRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (selectorRef.current && !selectorRef.current.contains(event.target as Node)) {
+                onClose();
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [onClose]);
+
+    return (
+        <div ref={selectorRef} className="absolute right-0 bottom-full mb-2 bg-brand-bg border border-brand-secondary rounded-full shadow-lg z-10 p-1 flex items-center gap-1 animate-fade-in">
+            {NUDGE_OPTIONS.map(option => (
+                <button
+                    key={option}
+                    onClick={() => onSelect(option)}
+                    className="p-2 rounded-full hover:bg-brand-primary/20 transition-colors duration-200 text-xl"
+                    title={option.split('!')[0]}
+                >
+                    {option.split(' ')[1]}
+                </button>
+            ))}
+        </div>
+    );
+};
+
+
+const RippleItem: React.FC<{ ripple: Ripple; currentUser: User; onNudge: (rippleId: string, message: string) => void; }> = ({ ripple, currentUser, onNudge }) => {
+  const [showNudgeSelector, setShowNudgeSelector] = useState(false);
+  
   const timeAgo = (date: string) => {
     const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
     let interval = seconds / 31536000;
@@ -33,17 +78,51 @@ const RippleItem: React.FC<{ ripple: Ripple }> = ({ ripple }) => {
     return Math.floor(seconds) + "s ago";
   };
   
+  const handleNudgeSelect = (message: string) => {
+      onNudge(ripple.id, message);
+      setShowNudgeSelector(false);
+  }
+
+  const hasNudged = ripple.nudges.some(n => n.fromUserName === currentUser.name);
+
   return (
-    <div className="flex items-start gap-3 p-3 bg-brand-bg/50 rounded-lg animate-fade-in">
-        <div className="w-8 h-8 bg-brand-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-            <Icon name="sparkles" className="w-5 h-5 text-brand-primary" />
+    <div className="flex flex-col gap-3 p-3 bg-brand-bg/50 rounded-lg animate-fade-in">
+        <div className="flex items-start gap-3">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${ripple.isQuestCompletion ? 'bg-yellow-400/20' : 'bg-brand-primary/20'}`}>
+                <Icon name={ripple.isQuestCompletion ? "trophy" : "sparkles"} className={`w-5 h-5 ${ripple.isQuestCompletion ? 'text-yellow-400' : 'text-brand-primary'}`} />
+            </div>
+            <div className="flex-grow">
+                 <p className="text-brand-text text-sm">
+                    <span className="font-bold">{ripple.fromUserName}</span> 
+                    {ripple.isQuestCompletion ? ' completed the quest ' : ' completed '} 
+                    <span className={`font-semibold ${ripple.isQuestCompletion ? 'text-yellow-400' : 'text-brand-primary'}`}>"{ripple.habitTitle}"</span>
+                    {ripple.isQuestCompletion && <span className="font-bold text-brand-safe"> +{ripple.questPoints} Momentum!</span>}
+                </p>
+                <p className="text-xs text-brand-text-muted">{timeAgo(ripple.timestamp)} &middot; {ripple.identityTag} Momentum</p>
+            </div>
+            {ripple.fromUserName !== currentUser.name && !ripple.isQuestCompletion && (
+                <div className="relative">
+                    <button 
+                        onClick={() => setShowNudgeSelector(s => !s)}
+                        disabled={hasNudged}
+                        className={`p-2 rounded-full transition-colors duration-200 ${hasNudged ? 'text-brand-primary' : 'text-brand-text-muted hover:bg-brand-surface'}`}
+                    >
+                        <Icon name="sparkles" className="w-5 h-5"/>
+                    </button>
+                    {showNudgeSelector && <NudgeSelector onSelect={handleNudgeSelect} onClose={() => setShowNudgeSelector(false)} />}
+                </div>
+            )}
         </div>
-        <div>
-            <p className="text-brand-text text-sm">
-                <span className="font-bold">{ripple.fromUserName}</span> completed <span className="font-semibold text-brand-primary">"{ripple.habitTitle}"</span>
-            </p>
-            <p className="text-xs text-brand-text-muted">{timeAgo(ripple.timestamp)} &middot; {ripple.identityTag} Momentum</p>
-        </div>
+        {ripple.nudges.length > 0 && (
+            <div className="pl-11 flex flex-wrap gap-2">
+                {ripple.nudges.map((nudge, index) => (
+                    <div key={index} title={`${nudge.message} from ${nudge.fromUserName}`} className="bg-brand-surface px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                        <span>{nudge.message.split(' ')[1]}</span>
+                        <span className="font-semibold">{nudge.fromUserName.split(' ')[0]}</span>
+                    </div>
+                ))}
+            </div>
+        )}
     </div>
   );
 }
@@ -128,10 +207,10 @@ const SquadMemberItem: React.FC<{
     );
 };
 
-export const SquadHub: React.FC<SquadHubProps> = ({ user, squad, allSquads, ripples, onOpenSquadBuilder, onOpenInviteModal, onOpenRequestModal, onVoteOnRequest, onVoteToKick }) => {
+export const SquadHub: React.FC<SquadHubProps> = ({ user, isProUser, squad, allSquads, ripples, chatMessages, onOpenSquadBuilder, onOpenInviteModal, onOpenRequestModal, onVoteOnRequest, onVoteToKick, onNudge, onCompleteQuest, onSendChatMessage, onTriggerUpgrade }) => {
   const [aiInsight, setAiInsight] = useState('');
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
-  const [activeTab, setActiveTab] = useState<'activity' | 'leaderboard' | 'members'>('activity');
+  const [activeTab, setActiveTab] = useState<'activity' | 'chat' | 'quests' | 'leaderboard' | 'members'>('activity');
   const [recruitmentMessage, setRecruitmentMessage] = useState('');
   const [isLoadingRecruitment, setIsLoadingRecruitment] = useState(false);
   const [suggestedSquads, setSuggestedSquads] = useState<Squad[]>([]);
@@ -198,6 +277,8 @@ export const SquadHub: React.FC<SquadHubProps> = ({ user, squad, allSquads, ripp
     );
   }
 
+  const squadMessages = chatMessages.filter(m => m.squadId === squad.id);
+
   return (
     <div className="bg-brand-surface border border-brand-secondary rounded-xl p-6">
         <div className="md:flex justify-between items-start mb-4">
@@ -227,19 +308,21 @@ export const SquadHub: React.FC<SquadHubProps> = ({ user, squad, allSquads, ripp
             </div>
         )}
       
-        <div className="flex border-b border-brand-secondary mb-4">
-            <button onClick={() => setActiveTab('activity')} className={`py-2 px-4 font-semibold transition-colors duration-200 ${activeTab === 'activity' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabActivity')}</button>
-            <button onClick={() => setActiveTab('leaderboard')} className={`py-2 px-4 font-semibold transition-colors duration-200 ${activeTab === 'leaderboard' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabLeaderboard')}</button>
-            <button onClick={() => setActiveTab('members')} className={`py-2 px-4 font-semibold transition-colors duration-200 ${activeTab === 'members' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabMembers', { count: squad.members.length })}</button>
+        <div className="flex border-b border-brand-secondary mb-4 overflow-x-auto">
+            <button onClick={() => setActiveTab('activity')} className={`py-2 px-4 font-semibold transition-colors duration-200 flex-shrink-0 ${activeTab === 'activity' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabActivity')}</button>
+            <button onClick={() => setActiveTab('chat')} className={`py-2 px-4 font-semibold transition-colors duration-200 flex-shrink-0 ${activeTab === 'chat' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabChat')}</button>
+            <button onClick={() => setActiveTab('quests')} className={`py-2 px-4 font-semibold transition-colors duration-200 flex-shrink-0 ${activeTab === 'quests' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabQuests')}</button>
+            <button onClick={() => setActiveTab('leaderboard')} className={`py-2 px-4 font-semibold transition-colors duration-200 flex-shrink-0 ${activeTab === 'leaderboard' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabLeaderboard')}</button>
+            <button onClick={() => setActiveTab('members')} className={`py-2 px-4 font-semibold transition-colors duration-200 flex-shrink-0 ${activeTab === 'members' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-muted hover:text-brand-text'}`}>{t('squadHub.tabMembers', { count: squad.members.length })}</button>
         </div>
 
         {activeTab === 'activity' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 animate-fade-in">
                 <div>
                     <h3 className="font-semibold mb-2">{t('squadHub.tabActivity')}</h3>
-                    <div className="space-y-3 bg-brand-bg p-3 rounded-lg max-h-60 overflow-y-auto">
+                    <div className="space-y-3 bg-brand-bg p-3 rounded-lg max-h-80 overflow-y-auto">
                         {ripples.length > 0 ? (
-                            ripples.map(ripple => <RippleItem key={ripple.id} ripple={ripple} />)
+                            ripples.map(ripple => <RippleItem key={ripple.id} ripple={ripple} currentUser={user} onNudge={onNudge} />)
                         ) : (
                             <p className="text-sm text-brand-text-muted text-center p-4">{t('squadHub.noRipples')}</p>
                         )}
@@ -258,6 +341,40 @@ export const SquadHub: React.FC<SquadHubProps> = ({ user, squad, allSquads, ripp
                             </button>
                         )}
                     </div>
+                </div>
+            </div>
+        )}
+        
+        {activeTab === 'chat' && (
+             <div className="animate-fade-in">
+                <ChatInterface 
+                    messages={squadMessages} 
+                    currentUser={user} 
+                    isProUser={isProUser}
+                    onSendMessage={(text) => onSendChatMessage(squad.id, text)}
+                    onTriggerUpgrade={onTriggerUpgrade}
+                />
+            </div>
+        )}
+
+        {activeTab === 'quests' && (
+             <div className="animate-fade-in">
+                <h3 className="font-semibold mb-2">{t('squadHub.questsTitle')}</h3>
+                <div className="space-y-3">
+                    {!squad.dailyQuests ? (
+                        <div className="text-center p-4 bg-brand-bg rounded-lg">
+                            <Icon name="sparkles" className="w-8 h-8 mx-auto text-brand-primary animate-pulse mb-2" />
+                            <p className="text-brand-text-muted">{t('squadHub.questsLoading')}</p>
+                        </div>
+                    ) : (
+                        squad.dailyQuests.quests.map(quest => (
+                            <SquadQuestCard
+                                key={quest.id}
+                                quest={quest}
+                                onComplete={() => onCompleteQuest(squad.id, quest.id)}
+                            />
+                        ))
+                    )}
                 </div>
             </div>
         )}

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useContext } from 'react';
-import { User, Habit, UserIdentity, Squad, Ripple, Mission, DailyHuddleData } from '../types';
+import { User, Habit, UserIdentity, Squad, Ripple, Mission, DailyHuddleData, ChatMessage, Team, TeamChallenge } from '../types';
 import { HabitCard } from './HabitCard';
 import { HabitBuilder } from './HabitBuilder';
 import { WeeklyReview } from './WeeklyReview';
@@ -11,10 +11,11 @@ import { Chatbot } from './Chatbot';
 import { SquadHub } from './SquadHub';
 import { SquadBuilder } from './SquadBuilder';
 import { MomentumMissionCard } from './MomentumMissionCard';
-import { DailyHuddle } from './DailyHuddle';
 import { generateSquadInvitationEmail, generateMembershipPitch } from '../services/geminiService';
 import { LanguageContext } from '../contexts/LanguageContext';
 import { SUPPORTED_LANGUAGES, TTS_VOICES } from '../constants';
+import { TeamHub } from './TeamHub';
+import { TeamAdminDashboard } from './TeamAdminDashboard';
 
 interface InviteModalProps {
   user: User;
@@ -187,10 +188,13 @@ interface DashboardProps {
   habits: Habit[];
   squads: Squad[];
   ripples: Ripple[];
+  chatMessages: ChatMessage[];
   mission: Mission | null;
   priorityHabitId: string | null;
   dailyHuddleData: DailyHuddleData | null;
   showDailyHuddle: boolean;
+  teams: Team[];
+  teamChallenges: TeamChallenge[];
   onAddHabit: (newHabit: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions'>) => void;
   onCompleteHabit: (habitId: string) => void;
   onDeleteHabit: (habitId: string) => void;
@@ -204,6 +208,11 @@ interface DashboardProps {
   onVoteOnJoinRequest: (squadId: string, requestUserName: string, vote: 'approve' | 'deny') => void;
   onVoteToKick: (squadId: string, targetUserName: string) => void;
   onEnergySelect: (energy: 'low' | 'medium' | 'high') => void;
+  onNudge: (rippleId: string, message: string) => void;
+  onCompleteSquadQuest: (squadId: string, questId: string) => void;
+  onSendChatMessage: (squadId: string, text: string) => void;
+  onTriggerUpgrade: (reason: string) => void;
+  onCreateTeamChallenge: (challenge: Omit<TeamChallenge, 'id' | 'currentCompletions' | 'isActive'>) => void;
 }
 
 const isToday = (someDate: string | null) => {
@@ -216,9 +225,9 @@ const isToday = (someDate: string | null) => {
 };
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
-  user, habits, squads, ripples, priorityHabitId, mission, onAddHabit, onCompleteHabit, onDeleteHabit, onUpdateUser, onSetPriorityHabit,
-  levelUpInfo, onCloseLevelUpModal, onEvolveHabit, onCreateSquad, onRequestToJoinSquad, onVoteOnJoinRequest, onVoteToKick,
-  dailyHuddleData, showDailyHuddle, onEnergySelect
+  user, habits, squads, ripples, chatMessages, priorityHabitId, mission, teams, teamChallenges, onAddHabit, onCompleteHabit, onDeleteHabit, onUpdateUser, onSetPriorityHabit,
+  levelUpInfo, onCloseLevelUpModal, onEvolveHabit, onCreateSquad, onRequestToJoinSquad, onVoteOnJoinRequest, onVoteToKick, onNudge, onCompleteSquadQuest,
+  onSendChatMessage, onTriggerUpgrade, onCreateTeamChallenge
 }) => {
   const [showHabitBuilder, setShowHabitBuilder] = useState(false);
   const [showSquadBuilder, setShowSquadBuilder] = useState(false);
@@ -229,7 +238,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [squadToRequest, setSquadToRequest] = useState<Squad | null>(null);
+  const [isAdminView, setIsAdminView] = useState(false);
   const { language, setLanguage, t } = useContext(LanguageContext)!;
+
+  const isProUser = user.subscription.plan === 'pro' || user.subscription.plan === 'team';
+  const userTeam = useMemo(() => teams.find(t => t.id === user.teamId), [teams, user.teamId]);
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLang = e.target.value;
@@ -287,6 +300,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const regularHabits = habits.filter(h => h.id !== priorityHabit?.id);
   const morningHabits = regularHabits.filter(h => h.cue === 'In the morning');
+  // Fix: Corrected a syntax error in the filter condition.
   const afternoonHabits = regularHabits.filter(h => h.cue === 'During my lunch break' || h.cue === 'After my workout');
   const eveningHabits = regularHabits.filter(h => h.cue === 'Before bed');
 
@@ -302,11 +316,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     if (!mission) return '';
     return habits.find(h => h.id === mission.habitId)?.title || '';
   }, [mission, habits]);
-
-  const mostImportantHabit = useMemo(() => {
-      if (!dailyHuddleData) return null;
-      return habits.find(h => h.id === dailyHuddleData.mostImportantHabitId) || null;
-  }, [dailyHuddleData, habits]);
 
   return (
     <>
@@ -327,10 +336,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </form>
             ) : (
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl md:text-4xl font-bold">{t('dashboard.header.title', { name: firstName })}</h1>
-                <button onClick={() => { setIsEditingName(true); setEditedName(user.name); }} className="text-brand-text-muted hover:text-white p-1 rounded-full hover:bg-brand-surface">
+                <h1 className="text-3xl md:text-4xl font-bold">{isAdminView ? `${userTeam?.name} Admin` : t('dashboard.header.title', { name: firstName })}</h1>
+                {!isAdminView && <button onClick={() => { setIsEditingName(true); setEditedName(user.name); }} className="text-brand-text-muted hover:text-white p-1 rounded-full hover:bg-brand-surface">
                     <Icon name="pencil" className="w-5 h-5"/>
-                </button>
+                </button>}
               </div>
             )}
             <p className="text-brand-text-muted">{formattedDate}</p>
@@ -356,105 +365,147 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <option key={voice.name} value={voice.name}>{voice.name} ({voice.gender})</option>
                 ))}
             </select>
+            {user.isAdmin && userTeam && (
+                <button 
+                    onClick={() => setIsAdminView(v => !v)}
+                    className="bg-brand-surface border border-brand-secondary text-brand-primary font-bold py-2 px-4 rounded-full text-sm hover:bg-brand-secondary transition-colors duration-300 flex items-center gap-2"
+                >
+                    <Icon name={isAdminView ? "users" : "shield"} className="w-4 h-4" /> {isAdminView ? 'My Dashboard' : 'Team Admin'}
+                </button>
+            )}
             <button 
                 onClick={() => setShowWeeklyReview(true)}
                 className="bg-brand-surface border border-brand-secondary text-brand-text font-semibold py-2 px-4 rounded-full text-sm hover:bg-brand-secondary transition-colors duration-300"
             >
                 {t('dashboard.header.weeklyReview')}
             </button>
+            {!isProUser && (
+                <button 
+                    onClick={() => onTriggerUpgrade('header')}
+                    className="bg-yellow-400/20 text-yellow-400 font-bold py-2 px-4 rounded-full text-sm hover:bg-yellow-400/40 transition-colors duration-300 flex items-center gap-2"
+                >
+                    <Icon name="sparkles" className="w-4 h-4" /> {t('dashboard.header.upgrade')}
+                </button>
+            )}
           </div>
         </header>
         
         <main className="max-w-4xl mx-auto">
-          {mission && !mission.isCompleted && <MomentumMissionCard mission={mission} habitTitle={missionHabitTitle} />}
-          
-          <IdentityStatus identities={user.selectedIdentities} />
-          
-          <div className="mt-8">
-              <SquadHub 
-                user={user}
-                squad={currentUserSquad} 
-                allSquads={squads} 
-                ripples={squadRipples} 
-                onOpenSquadBuilder={() => setShowSquadBuilder(true)}
-                onOpenInviteModal={() => setShowInviteModal(true)}
-                onOpenRequestModal={(squad) => setSquadToRequest(squad)}
-                onVoteOnRequest={onVoteOnJoinRequest}
-                onVoteToKick={onVoteToKick}
-              />
-          </div>
+          {isAdminView && userTeam ? (
+            <TeamAdminDashboard 
+                team={userTeam}
+                challenges={teamChallenges.filter(c => c.teamId === userTeam.id)}
+                onCreateChallenge={onCreateTeamChallenge}
+            />
+          ) : (
+            <>
+              {mission && !mission.isCompleted && <MomentumMissionCard mission={mission} habitTitle={missionHabitTitle} />}
+              
+              <IdentityStatus identities={user.selectedIdentities} />
+              
+              {userTeam && (
+                <div className="mt-8">
+                    <TeamHub 
+                        team={userTeam}
+                        challenges={teamChallenges.filter(c => c.teamId === userTeam.id)}
+                        currentUserId={user.id}
+                    />
+                </div>
+              )}
 
-          <div className="space-y-8 mt-8">
-              {habits.length === 0 ? (
-                  <div className="text-center bg-brand-surface border border-brand-secondary rounded-xl p-8">
-                      <h2 className="text-xl font-semibold mb-2">{t('dashboard.empty.title')}</h2>
-                      <p className="text-brand-text-muted mb-6">{t('dashboard.empty.message')}</p>
-                      <button onClick={() => setShowHabitBuilder(true)} className="bg-brand-primary text-white font-bold py-3 px-6 rounded-full text-base hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto">
-                          <Icon name="plus" className="w-5 h-5"/> {t('dashboard.empty.button')}
-                      </button>
-                  </div>
-              ) : (
-                  <>
-                      {priorityHabit && (
-                          <div>
-                              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                  <Icon name="star" solid className="w-5 h-5 text-yellow-400" />
-                                  {t('dashboard.focus.title')}
-                              </h2>
-                              <div className="bg-brand-primary/5 border border-brand-primary/20 rounded-xl p-1">
-                                  <HabitCard 
-                                      key={priorityHabit.id} 
-                                      habit={priorityHabit} 
-                                      onComplete={onCompleteHabit} 
-                                      onDelete={handleInitiateDelete} 
-                                      isCompletedToday={isToday(priorityHabit.lastCompleted)}
-                                      isPriority={priorityHabit.id === priorityHabitId || !priorityHabitId}
-                                      onSetPriority={onSetPriorityHabit}
-                                  />
-                              </div>
-                          </div>
-                      )}
-                      {morningHabits.length > 0 && (
-                          <div>
-                              <h2 className="text-xl font-bold mb-4">{t('dashboard.time.morning')}</h2>
-                              <div className="space-y-4">
-                                  {morningHabits.map(habit => (
-                                      <HabitCard key={habit.id} habit={habit} onComplete={onCompleteHabit} onDelete={handleInitiateDelete} isCompletedToday={isToday(habit.lastCompleted)} isPriority={habit.id === priorityHabitId} onSetPriority={onSetPriorityHabit}/>
-                                  ))}
-                              </div>
-                          </div>
-                      )}
-                      {afternoonHabits.length > 0 && (
-                          <div>
-                              <h2 className="text-xl font-bold mb-4">{t('dashboard.time.afternoon')}</h2>
-                              <div className="space-y-4">
-                                  {afternoonHabits.map(habit => (
-                                      <HabitCard key={habit.id} habit={habit} onComplete={onCompleteHabit} onDelete={handleInitiateDelete} isCompletedToday={isToday(habit.lastCompleted)} isPriority={habit.id === priorityHabitId} onSetPriority={onSetPriorityHabit}/>
-                                  ))}
-                              </div>
-                          </div>
-                      )}
-                      {eveningHabits.length > 0 && (
-                          <div>
-                              <h2 className="text-xl font-bold mb-4">{t('dashboard.time.evening')}</h2>
-                              <div className="space-y-4">
-                                  {eveningHabits.map(habit => (
-                                      <HabitCard key={habit.id} habit={habit} onComplete={onCompleteHabit} onDelete={handleInitiateDelete} isCompletedToday={isToday(habit.lastCompleted)} isPriority={habit.id === priorityHabitId} onSetPriority={onSetPriorityHabit}/>
-                                  ))}
-                              </div>
-                          </div>
-                      )}
-                      <div className="fixed bottom-8 right-8 z-40 flex flex-col gap-4">
-                          <button onClick={() => setIsChatbotOpen(true)} className="bg-brand-secondary text-white rounded-full p-4 shadow-lg hover:bg-opacity-80 transition-transform duration-200 hover:scale-110">
-                              <Icon name="microphone" solid className="w-8 h-8" />
-                          </button>
-                          <button onClick={() => setShowHabitBuilder(true)} className="bg-brand-primary text-white rounded-full p-4 shadow-lg hover:bg-opacity-80 transition-transform duration-200 hover:scale-110">
-                              <Icon name="plus" className="w-8 h-8" />
+              <div className="mt-8">
+                  <SquadHub 
+                    user={user}
+                    isProUser={isProUser}
+                    squad={currentUserSquad} 
+                    allSquads={squads} 
+                    ripples={squadRipples} 
+                    chatMessages={chatMessages}
+                    onOpenSquadBuilder={() => setShowSquadBuilder(true)}
+                    onOpenInviteModal={() => setShowInviteModal(true)}
+                    onOpenRequestModal={(squad) => setSquadToRequest(squad)}
+                    onVoteOnRequest={onVoteOnJoinRequest}
+                    onVoteToKick={onVoteToKick}
+                    onNudge={onNudge}
+                    onCompleteQuest={onCompleteSquadQuest}
+                    onSendChatMessage={onSendChatMessage}
+                    onTriggerUpgrade={onTriggerUpgrade}
+                  />
+              </div>
+
+              <div className="space-y-8 mt-8">
+                  {habits.length === 0 ? (
+                      <div className="text-center bg-brand-surface border border-brand-secondary rounded-xl p-8">
+                          <h2 className="text-xl font-semibold mb-2">{t('dashboard.empty.title')}</h2>
+                          <p className="text-brand-text-muted mb-6">{t('dashboard.empty.message')}</p>
+                          <button onClick={() => setShowHabitBuilder(true)} className="bg-brand-primary text-white font-bold py-3 px-6 rounded-full text-base hover:bg-opacity-80 transition-colors duration-300 flex items-center gap-2 mx-auto">
+                              <Icon name="plus" className="w-5 h-5"/> {t('dashboard.empty.button')}
                           </button>
                       </div>
-                  </>
-              )}
-          </div>
+                  ) : (
+                      <>
+                          {priorityHabit && (
+                              <div>
+                                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                      <Icon name="star" solid className="w-5 h-5 text-yellow-400" />
+                                      {t('dashboard.focus.title')}
+                                  </h2>
+                                  <div className="bg-brand-primary/5 border border-brand-primary/20 rounded-xl p-1">
+                                      <HabitCard 
+                                          key={priorityHabit.id} 
+                                          habit={priorityHabit} 
+                                          onComplete={onCompleteHabit} 
+                                          onDelete={handleInitiateDelete} 
+                                          isCompletedToday={isToday(priorityHabit.lastCompleted)}
+                                          isPriority={priorityHabit.id === priorityHabitId || !priorityHabitId}
+                                          onSetPriority={onSetPriorityHabit}
+                                      />
+                                  </div>
+                              </div>
+                          )}
+                          {morningHabits.length > 0 && (
+                              <div>
+                                  <h2 className="text-xl font-bold mb-4">{t('dashboard.time.morning')}</h2>
+                                  <div className="space-y-4">
+                                      {morningHabits.map(habit => (
+                                          <HabitCard key={habit.id} habit={habit} onComplete={onCompleteHabit} onDelete={handleInitiateDelete} isCompletedToday={isToday(habit.lastCompleted)} isPriority={habit.id === priorityHabitId} onSetPriority={onSetPriorityHabit}/>
+                                      ))}
+                                  </div>
+                              </div>
+                          )}
+                          {afternoonHabits.length > 0 && (
+                              <div>
+                                  <h2 className="text-xl font-bold mb-4">{t('dashboard.time.afternoon')}</h2>
+                                  <div className="space-y-4">
+                                      {afternoonHabits.map(habit => (
+                                          <HabitCard key={habit.id} habit={habit} onComplete={onCompleteHabit} onDelete={handleInitiateDelete} isCompletedToday={isToday(habit.lastCompleted)} isPriority={habit.id === priorityHabitId} onSetPriority={onSetPriorityHabit}/>
+                                      ))}
+                                  </div>
+                              </div>
+                          )}
+                          {eveningHabits.length > 0 && (
+                              <div>
+                                  <h2 className="text-xl font-bold mb-4">{t('dashboard.time.evening')}</h2>
+                                  <div className="space-y-4">
+                                      {eveningHabits.map(habit => (
+                                          <HabitCard key={habit.id} habit={habit} onComplete={onCompleteHabit} onDelete={handleInitiateDelete} isCompletedToday={isToday(habit.lastCompleted)} isPriority={habit.id === priorityHabitId} onSetPriority={onSetPriorityHabit}/>
+                                      ))}
+                                  </div>
+                              </div>
+                          )}
+                          <div className="fixed bottom-8 right-8 z-40 flex flex-col gap-4">
+                              <button onClick={() => setIsChatbotOpen(true)} className="bg-brand-secondary text-white rounded-full p-4 shadow-lg hover:bg-opacity-80 transition-transform duration-200 hover:scale-110">
+                                  <Icon name="microphone" solid className="w-8 h-8" />
+                              </button>
+                              <button onClick={() => setShowHabitBuilder(true)} className="bg-brand-primary text-white rounded-full p-4 shadow-lg hover:bg-opacity-80 transition-transform duration-200 hover:scale-110">
+                                  <Icon name="plus" className="w-8 h-8" />
+                              </button>
+                          </div>
+                      </>
+                  )}
+              </div>
+            </>
+          )}
         </main>
       </div>
 
@@ -465,15 +516,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {levelUpInfo && <LevelUpModal identity={levelUpInfo.identity} habitToEvolve={levelUpInfo.habit} onEvolve={onEvolveHabit} onClose={onCloseLevelUpModal} />}
       {isChatbotOpen && <Chatbot user={user} habits={habits} onClose={() => setIsChatbotOpen(false)} />}
       
-      {showDailyHuddle && dailyHuddleData && mostImportantHabit && (
-        <DailyHuddle 
-          huddle={dailyHuddleData} 
-          mostImportantHabit={mostImportantHabit} 
-          onEnergySelect={onEnergySelect} 
-          voicePreference={user.voicePreference}
-        />
-      )}
-
       {showInviteModal && currentUserSquad && (
         <InviteModal 
             user={user} 

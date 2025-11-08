@@ -7,6 +7,7 @@ import { LanguageContext } from '../contexts/LanguageContext';
 
 interface OnboardingProps {
   onComplete: (user: User, habits: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields'>[]) => void;
+  onTriggerUpgrade: (reason: string) => void;
 }
 
 type OnboardingStep = 'welcome' | 'user-info' | 'identity-select' | 'blueprint' | 'loss-framing' | 'statement' | 'complete';
@@ -51,7 +52,7 @@ const BlueprintHabitCard: React.FC<{
 );
 
 
-export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
+export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onTriggerUpgrade }) => {
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -73,9 +74,10 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       if (isSelected) {
         return prev.filter(i => i.id !== identity.id);
       }
-      if (prev.length < 3) {
+      if (prev.length < 1) {
         return [...prev, identity];
       }
+      onTriggerUpgrade('identity');
       return prev;
     });
   };
@@ -161,8 +163,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       case 'identity-select':
         return (
           <div className="animate-fade-in">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">Choose Your Archetypes</h2>
-            <p className="text-brand-text-muted text-center mb-8">(Select 1-3)</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">Choose Your Primary Archetype</h2>
+            <p className="text-brand-text-muted text-center mb-8">(Select one to start. Unlock more with Pro.)</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {IDENTITY_ARCHETYPES.map(identity => (
                 <IdentityCard key={identity.id} identity={identity} isSelected={selectedIdentities.some(i => i.id === identity.id)} onClick={() => handleIdentityToggle(identity)} />
@@ -285,6 +287,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                    <button 
                       onClick={() => {
                           const newUser: User = {
+                              id: `user-${Date.now()}`,
                               name,
                               email,
                               selectedIdentities: selectedIdentities.map(identity => ({
@@ -295,6 +298,9 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                               identityStatements,
                               onboardingCompleted: true,
                               lastHuddleDate: null,
+                              language,
+                              subscription: { plan: 'free' },
+                              dailyTranslations: { date: '', count: 0 },
                           };
                           onComplete(newUser, selectedBlueprintHabits);
                       }}

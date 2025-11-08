@@ -2,7 +2,8 @@
     "dashboard": {
         "header": {
             "title": "Hello, {{name}}",
-            "weeklyReview": "Weekly Review"
+            "weeklyReview": "Weekly Review",
+            "upgrade": "Upgrade to Pro"
         },
         "mission": {
             "title": "This Week's Momentum Mission",
@@ -60,6 +61,8 @@
         "voteToKick": "Vote to Kick",
         "you": "(You)",
         "tabActivity": "Activity Ripple",
+        "tabChat": "Chat",
+        "tabQuests": "Quests",
         "tabLeaderboard": "Leaderboard",
         "tabMembers": "Members ({{count}})",
         "noRipples": "Complete a habit to start the ripple!",
@@ -69,7 +72,19 @@
         "leaderboardTitle": "Top 10 Global Squad Rankings",
         "membersTitle": "Squad Members",
         "sharedMomentum": "Shared Momentum",
-        "invite": "Invite"
+        "invite": "Invite",
+        "questsTitle": "Today's Squad Quests",
+        "questsLoading": "Generating today's quests...",
+        "questCompleteButton": "Complete Quest",
+        "questCompletedBy": "Completed by {{name}}",
+        "chatPlaceholder": "Type a message...",
+        "chatSend": "Send",
+        "noMessages": "No messages yet. Be the first to say hi!",
+        "chatTranslating": "Translating...",
+        "chatShowOriginal": "Show original",
+        "chatShowTranslation": "Show translation",
+        "chatTranslationLimit": "Daily translation limit reached.",
+        "upgrade": "Upgrade"
     },
     "dailyHuddle": {
         "oneThing": "Your One Thing Today",
@@ -78,5 +93,53 @@
         "energyMedium": "Medium",
         "energyHigh": "High",
         "energyTip": "Select 'Low' and we'll help you adapt your goal to keep momentum."
+    },
+    "upgradeModal": {
+        "title": "Upgrade to Momentum Pro",
+        "reason": {
+            "habit": "You've reached the 3-habit limit for the free plan.",
+            "identity": "Unlock the ability to cultivate multiple identities at once.",
+            "translation": "Break the language barrier with unlimited translations."
+        },
+        "feature1": "Unlimited Habits",
+        "feature1Desc": "Create and track as many routines as you need.",
+        "feature2": "Multiple Identities",
+        "feature2Desc": "Simultaneously develop up to 3 identities.",
+        "feature3": "Unlimited Chat Translations",
+        "feature3Desc": "Communicate seamlessly with your global squad.",
+        "feature4": "Monthly Momentum Shields",
+        "feature4Desc": "Protect your most important streaks automatically.",
+        "cta": "Unlock Pro Now",
+        "close": "Maybe Later"
+    },
+    "teamHub": {
+        "title": "Team Hub",
+        "challengeTitle": "Active Team Challenge",
+        "leaderboardTitle": "Team Leaderboard",
+        "rank": "Rank",
+        "member": "Member",
+        "completions": "Completions"
+    },
+    "adminDashboard": {
+        "title": "Team Admin Dashboard",
+        "statsTitle": "Team Analytics (Privacy-First)",
+        "totalMembers": "Total Members",
+        "activeMembers": "Active Members (Last 7 Days)",
+        "completionRate": "Avg. Completion Rate",
+        "membersTitle": "Manage Members",
+        "inviteMember": "Invite New Member",
+        "remove": "Remove",
+        "challengesTitle": "Manage Team Challenges",
+        "createChallenge": "Create New Challenge",
+        "challengeForm": {
+            "title": "Challenge Title",
+            "titlePlaceholder": "e.g., Q4 Wellness Initiative",
+            "description": "Description",
+            "descriptionPlaceholder": "A short, motivating description for the team.",
+            "habitCategory": "Habit Category",
+            "habitCategoryPlaceholder": "e.g., Mindfulness, Exercise, Reading",
+            "target": "Target Total Completions",
+            "createButton": "Launch Challenge"
+        }
     }
 }

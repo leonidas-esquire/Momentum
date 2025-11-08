@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Onboarding } from './components/Onboarding';
 import { Dashboard } from './components/Dashboard';
-import { User, Habit, UserIdentity, Squad, Ripple, Mission, DailyHuddleData, JoinRequest } from './types';
+import { User, Habit, UserIdentity, Squad, Ripple, Mission, DailyHuddleData, JoinRequest, Nudge, SquadQuest, ChatMessage, Team, TeamChallenge } from './types';
 import { Toast, ToastMessage } from './components/Toast';
-import { generateMomentumMission, generateDailyHuddle, generateLowEnergySuggestion } from './services/geminiService';
+import { generateMomentumMission, generateDailyHuddle, generateLowEnergySuggestion, generateSquadQuests, translateText } from './services/geminiService';
 // Fix: Imported the Icon component to resolve a 'Cannot find name' error.
 import { Icon } from './components/Icon';
 import { LanguageContext } from './contexts/LanguageContext';
+import { Chatbot } from './components/Chatbot';
+import { UpgradeModal } from './components/UpgradeModal';
 
 const initialSquads: Squad[] = [
   { id: 'squad-1', name: 'Momentum Mavericks', goalIdentity: 'Achiever', members: ['Leo', 'Mia', 'Zoe'], sharedMomentum: 15432, pendingRequests: [], activeKickVotes: [] },
@@ -17,15 +19,34 @@ const initialSquads: Squad[] = [
   { id: 'squad-6', name: 'Achiever\'s Alliance', goalIdentity: 'Achiever', members: ['Nora', 'Oscar'], sharedMomentum: 18345, pendingRequests: [], activeKickVotes: [] },
 ];
 
+const mockTeam: Team = {
+    id: 'team-acme-corp',
+    name: 'ACME Corporation',
+    adminUserId: 'user-123', // The main user will be the admin for this demo
+    members: [
+        { userId: 'user-123', name: 'John Doe', email: 'john.doe@example.com', totalCompletions: 128 },
+        { userId: 'user-456', name: 'Jane Smith', email: 'jane.smith@example.com', totalCompletions: 152 },
+        { userId: 'user-789', name: 'Peter Jones', email: 'peter.jones@example.com', totalCompletions: 98 },
+    ],
+    subscriptionStatus: 'active',
+};
+
+const mockTeamChallenges: TeamChallenge[] = [
+    { id: 'challenge-1', teamId: 'team-acme-corp', title: 'Q3 Wellness Push', description: 'Log 500 minutes of mindfulness or exercise.', habitCategory: 'Wellness', targetCompletions: 500, currentCompletions: 275, isActive: true },
+];
+
 const SQUAD_MEMBER_LIMIT = 5;
 const JOIN_APPROVAL_THRESHOLD = 2;
 const KICK_VOTE_THRESHOLD_RATIO = 0.5; // More than 50%
+const FREE_HABIT_LIMIT = 3;
+const FREE_TRANSLATION_LIMIT = 10;
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [habits, setHabits] = useState<Habit[]>([]);
   const [squads, setSquads] = useState<Squad[]>(initialSquads);
   const [ripples, setRipples] = useState<Ripple[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [mission, setMission] = useState<Mission | null>(null);
   const [priorityHabitId, setPriorityHabitId] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -35,7 +56,16 @@ const App: React.FC = () => {
   const [dailyHuddleData, setDailyHuddleData] = useState<DailyHuddleData | null>(null);
   const [showDailyHuddle, setShowDailyHuddle] = useState(false);
   const [isGeneratingHuddle, setIsGeneratingHuddle] = useState(false);
+
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState<string>('');
   
+  // B2B State
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [teamChallenges, setTeamChallenges] = useState<TeamChallenge[]>([]);
+
+  const pendingTranslations = useRef(new Set<string>());
+
   const languageContext = useContext(LanguageContext);
   if (!languageContext) {
     throw new Error('LanguageContext must be used within a LanguageProvider');
@@ -55,17 +85,47 @@ const App: React.FC = () => {
     return new Date().toISOString().split('T')[0];
   };
 
+  const triggerUpgradeModal = (reason: string) => {
+    setUpgradeReason(reason);
+    setShowUpgradeModal(true);
+  };
+
+  const handleSimulateUpgrade = () => {
+    if (user) {
+        setUser({
+            ...user,
+            subscription: { plan: 'pro' },
+        });
+        addToast("Welcome to Momentum Pro! All features unlocked.", 'success');
+        setShowUpgradeModal(false);
+    }
+  };
+
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem('momentum_user');
       const storedHabits = localStorage.getItem('momentum_habits');
       const storedSquads = localStorage.getItem('momentum_squads');
       const storedRipples = localStorage.getItem('momentum_ripples');
+      const storedChat = localStorage.getItem('momentum_chat');
       const storedMission = localStorage.getItem('momentum_mission');
       const storedPriorityId = localStorage.getItem('momentum_priority_habit_id');
+      const storedTeams = localStorage.getItem('momentum_teams');
+      const storedTeamChallenges = localStorage.getItem('momentum_team_challenges');
       
       if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
+        let parsedUser: User = JSON.parse(storedUser);
+        if (!parsedUser.id) parsedUser.id = 'user-123'; // Assign ID for demo purposes
+        if (!parsedUser.language) parsedUser.language = 'en';
+        if (!parsedUser.subscription) parsedUser.subscription = { plan: 'free' };
+        if (!parsedUser.dailyTranslations) parsedUser.dailyTranslations = { date: '', count: 0 };
+
+        // If user is on a team, they get pro features.
+        const userTeam = storedTeams ? (JSON.parse(storedTeams) as Team[]).find(t => t.id === parsedUser.teamId) : null;
+        if (userTeam && userTeam.subscriptionStatus === 'active') {
+            parsedUser.subscription.plan = 'team';
+        }
+
         setUser(parsedUser);
         if (parsedUser.language) {
             setLanguage(parsedUser.language);
@@ -74,6 +134,7 @@ const App: React.FC = () => {
       if (storedHabits) setHabits(JSON.parse(storedHabits));
       if (storedSquads) setSquads(JSON.parse(storedSquads));
       if (storedRipples) setRipples(JSON.parse(storedRipples));
+      if (storedChat) setChatMessages(JSON.parse(storedChat));
       if (storedPriorityId) setPriorityHabitId(JSON.parse(storedPriorityId));
       if (storedMission) {
         const parsedMission = JSON.parse(storedMission);
@@ -86,6 +147,8 @@ const App: React.FC = () => {
              localStorage.removeItem('momentum_mission');
         }
     }
+    setTeams(storedTeams ? JSON.parse(storedTeams) : []);
+    setTeamChallenges(storedTeamChallenges ? JSON.parse(storedTeamChallenges) : []);
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
     }
@@ -113,6 +176,36 @@ const App: React.FC = () => {
       }
     }
   }, [isLoaded, user, habits, mission, language]);
+
+  // Daily Squad Quest Check
+    useEffect(() => {
+        if (isLoaded && user?.squadId) {
+            const squad = squads.find(s => s.id === user.squadId);
+            const todayStr = getTodayDateString();
+
+            if (squad && squad.dailyQuests?.date !== todayStr) {
+                generateSquadQuests(squad.goalIdentity, language).then(generatedQuests => {
+                    const newQuests: SquadQuest[] = generatedQuests.map((q, i) => ({
+                        id: `${todayStr}-${i}`,
+                        title: q.title,
+                        points: q.points,
+                        isCompleted: false,
+                        completedBy: null,
+                    }));
+                    
+                    const updatedSquad = {
+                        ...squad,
+                        dailyQuests: {
+                            date: todayStr,
+                            quests: newQuests,
+                        },
+                    };
+
+                    setSquads(squads.map(s => s.id === squad.id ? updatedSquad : s));
+                });
+            }
+        }
+    }, [isLoaded, user, squads, language]);
 
 
   useEffect(() => {
@@ -179,6 +272,9 @@ const App: React.FC = () => {
         localStorage.setItem('momentum_habits', JSON.stringify(habits));
         localStorage.setItem('momentum_squads', JSON.stringify(squads));
         localStorage.setItem('momentum_ripples', JSON.stringify(ripples));
+        localStorage.setItem('momentum_chat', JSON.stringify(chatMessages));
+        localStorage.setItem('momentum_teams', JSON.stringify(teams));
+        localStorage.setItem('momentum_team_challenges', JSON.stringify(teamChallenges));
         if (mission) localStorage.setItem('momentum_mission', JSON.stringify(mission));
         else localStorage.removeItem('momentum_mission');
         if (priorityHabitId) localStorage.setItem('momentum_priority_habit_id', JSON.stringify(priorityHabitId));
@@ -187,7 +283,7 @@ const App: React.FC = () => {
         console.error("Failed to save data to localStorage", error);
       }
     }
-  }, [user, habits, squads, ripples, mission, priorityHabitId, isLoaded, language]);
+  }, [user, habits, squads, ripples, chatMessages, mission, priorityHabitId, teams, teamChallenges, isLoaded, language]);
 
   useEffect(() => {
     if (!isLoaded || !user || habits.length < 2 || mission) return;
@@ -217,11 +313,88 @@ const App: React.FC = () => {
     generateNewMission();
   }, [isLoaded, user, habits.length, mission, language]);
 
+  // Automatic Chat Translation Effect
+  useEffect(() => {
+    const isPro = user?.subscription.plan === 'pro' || user?.subscription.plan === 'team';
+    if (!user?.language || isPro) return;
+
+    const targetLang = user.language;
+    const todayStr = getTodayDateString();
+
+    let translationsToday = user.dailyTranslations.date === todayStr ? user.dailyTranslations.count : 0;
+    
+    const messagesToTranslate = chatMessages.filter(msg => {
+        const needsTranslation = msg.originalLanguage !== targetLang && !msg.translations[targetLang];
+        const translationKey = `${msg.id}-${targetLang}`;
+        return needsTranslation && !pendingTranslations.current.has(translationKey);
+    });
+
+    if (messagesToTranslate.length === 0) return;
+
+    const updatedTranslations: Record<string, Record<string, string>> = {};
+    let translationsMade = 0;
+
+    const translationPromises = messagesToTranslate.map(async (msg) => {
+        const translationKey = `${msg.id}-${targetLang}`;
+        pendingTranslations.current.add(translationKey);
+
+        if (translationsToday + translationsMade < FREE_TRANSLATION_LIMIT) {
+            translationsMade++;
+            const translatedText = await translateText(msg.originalText, targetLang, msg.originalLanguage);
+            updatedTranslations[msg.id] = { [targetLang]: translatedText };
+        } else {
+            updatedTranslations[msg.id] = { [targetLang]: 'LIMIT_REACHED' };
+        }
+    });
+
+    Promise.all(translationPromises).then(() => {
+        setChatMessages(prevMessages => 
+            prevMessages.map(msg => {
+                if (updatedTranslations[msg.id]) {
+                    return { ...msg, translations: { ...msg.translations, ...updatedTranslations[msg.id] } };
+                }
+                return msg;
+            })
+        );
+        
+        if (translationsMade > 0) {
+            const newCount = translationsToday + translationsMade;
+            setUser(u => u ? { ...u, dailyTranslations: { date: todayStr, count: newCount } } : u);
+        }
+
+        messagesToTranslate.forEach(msg => {
+            const translationKey = `${msg.id}-${targetLang}`;
+            pendingTranslations.current.delete(translationKey);
+        });
+    });
+
+  }, [chatMessages, user?.language, user?.subscription.plan]);
+
   const handleOnboardingComplete = (
     newUser: User,
     blueprintHabits: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields'>[]
   ) => {
-    setUser({ ...newUser, language, lastHuddleDate: null, openToSquadSuggestions: true, voicePreference: 'Kore' });
+    const finalUser: User = { 
+        ...newUser, 
+        id: 'user-123', // Static ID for demo
+        language, 
+        lastHuddleDate: null, 
+        openToSquadSuggestions: true, 
+        voicePreference: 'Kore',
+        subscription: { plan: 'free' },
+        dailyTranslations: { date: getTodayDateString(), count: 0 },
+        // For demo: automatically add new user to the mock team
+        teamId: mockTeam.id,
+        isAdmin: true, // Make them the admin
+    };
+
+    // Add user to team and update subscription
+    const updatedTeam = { ...mockTeam, members: [...mockTeam.members, { userId: finalUser.id, name: finalUser.name, email: finalUser.email, totalCompletions: 0 }] };
+    finalUser.subscription.plan = 'team';
+
+    setTeams([updatedTeam]);
+    setTeamChallenges(mockTeamChallenges);
+    setUser(finalUser);
   
     const habitsToAdd: Habit[] = blueprintHabits.map(h => ({
       ...h,
@@ -241,6 +414,12 @@ const App: React.FC = () => {
   };
 
   const handleAddHabit = (newHabit: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields'>) => {
+    const isPro = user?.subscription.plan === 'pro' || user?.subscription.plan === 'team';
+    if (!isPro && habits.length >= FREE_HABIT_LIMIT) {
+        triggerUpgradeModal('habit');
+        return;
+    }
+
     const habitToAdd: Habit = {
       ...newHabit,
       id: new Date().toISOString() + Math.random(),
@@ -346,6 +525,7 @@ const App: React.FC = () => {
             habitTitle: completedHabit.title,
             identityTag: completedHabit.identityTag,
             timestamp: new Date().toISOString(),
+            nudges: [],
           };
           setRipples(prev => [newRipple, ...prev].slice(0, 20));
           const updatedSquad = { ...squad, sharedMomentum: squad.sharedMomentum + (1 + completedHabit.streak) };
@@ -538,6 +718,102 @@ const App: React.FC = () => {
     }
     setShowDailyHuddle(false);
   };
+  
+  const handleNudge = (rippleId: string, message: string) => {
+      if (!user) return;
+      
+      let recipientName = '';
+      const updatedRipples = ripples.map(r => {
+          if (r.id === rippleId) {
+              if (r.nudges.some(n => n.fromUserName === user.name)) return r; // Already nudged
+              const newNudge: Nudge = { fromUserName: user.name, message };
+              recipientName = r.fromUserName;
+              return { ...r, nudges: [...r.nudges, newNudge] };
+          }
+          return r;
+      });
+
+      setRipples(updatedRipples);
+
+      // In a real app, this would be a push notification to the recipient.
+      // Here, we simulate it with a toast if the recipient is not the current user.
+      if (recipientName && recipientName !== user.name) {
+          // This toast would not appear for the current user in a real scenario.
+          // It's here to demonstrate the nudge was "sent".
+          addToast(`You nudged ${recipientName}!`, 'success');
+      }
+  };
+
+  const handleCompleteSquadQuest = (squadId: string, questId: string) => {
+    if (!user) return;
+
+    let completedQuest: SquadQuest | null = null;
+
+    setSquads(squads => squads.map(s => {
+      if (s.id === squadId && s.dailyQuests) {
+        const quest = s.dailyQuests.quests.find(q => q.id === questId);
+        if (quest && !quest.isCompleted) {
+          completedQuest = { ...quest, isCompleted: true, completedBy: user.name };
+          
+          const newQuests = s.dailyQuests.quests.map(q => q.id === questId ? completedQuest : q);
+          
+          return {
+            ...s,
+            sharedMomentum: s.sharedMomentum + completedQuest.points,
+            dailyQuests: {
+              ...s.dailyQuests,
+              quests: newQuests,
+            }
+          };
+        }
+      }
+      return s;
+    }));
+
+    if (completedQuest) {
+      addToast(`Quest Complete! +${completedQuest.points} Momentum for the squad.`, 'success');
+      const newRipple: Ripple = {
+        id: Date.now().toString(),
+        squadId: squadId,
+        fromUserName: user.name.split(' ')[0],
+        habitTitle: completedQuest.title,
+        identityTag: squads.find(s => s.id === squadId)?.goalIdentity || '',
+        timestamp: new Date().toISOString(),
+        nudges: [],
+        isQuestCompletion: true,
+        questPoints: completedQuest.points,
+      };
+      setRipples(prev => [newRipple, ...prev].slice(0, 20));
+    }
+  };
+
+  const handleSendChatMessage = (squadId: string, text: string) => {
+      if (!user) return;
+      const newMessage: ChatMessage = {
+          id: `${Date.now()}-${user.name}`,
+          squadId,
+          fromUserName: user.name,
+          originalText: text,
+          originalLanguage: user.language,
+          translations: {},
+          timestamp: new Date().toISOString(),
+      };
+      setChatMessages(prev => [...prev, newMessage]);
+  };
+
+  const handleCreateTeamChallenge = (challenge: Omit<TeamChallenge, 'id' | 'currentCompletions' | 'isActive'>) => {
+    if (!user || !user.teamId) return;
+
+    const newChallenge: TeamChallenge = {
+        ...challenge,
+        id: `challenge-${Date.now()}`,
+        currentCompletions: 0,
+        isActive: true,
+    };
+    setTeamChallenges(prev => [...prev, newChallenge]);
+    addToast("New Team Challenge created!", 'success');
+  };
+
 
   if (!isLoaded) return <div className="min-h-screen bg-brand-bg flex items-center justify-center"><p>Loading...</p></div>;
   if (isGeneratingHuddle && !dailyHuddleData) {
@@ -552,37 +828,67 @@ const App: React.FC = () => {
   return (
     <>
       {user?.onboardingCompleted ? (
-        <Dashboard 
-            user={user} 
-            habits={habits} 
-            squads={squads}
-            ripples={ripples}
-            mission={mission}
-            priorityHabitId={priorityHabitId}
-            onAddHabit={handleAddHabit} 
-            onCompleteHabit={handleCompleteHabit} 
-            onDeleteHabit={handleDeleteHabit} 
-            onUpdateUser={handleUpdateUser} 
-            onSetPriorityHabit={handleSetPriorityHabit}
-            levelUpInfo={levelUpInfo}
-            onCloseLevelUpModal={() => setLevelUpInfo(null)}
-            onEvolveHabit={handleEvolveHabit}
-            onCreateSquad={handleCreateSquad}
-            onRequestToJoinSquad={handleRequestToJoinSquad}
-            onVoteOnJoinRequest={handleVoteOnJoinRequest}
-            onVoteToKick={handleVoteToKick}
-            onEnergySelect={handleEnergySelect}
-            dailyHuddleData={dailyHuddleData}
-            showDailyHuddle={showDailyHuddle}
-        />
+        <>
+            <Dashboard 
+                user={user} 
+                habits={habits} 
+                squads={squads}
+                ripples={ripples}
+                chatMessages={chatMessages}
+                mission={mission}
+                priorityHabitId={priorityHabitId}
+                teams={teams}
+                teamChallenges={teamChallenges}
+                onAddHabit={handleAddHabit} 
+                onCompleteHabit={handleCompleteHabit} 
+                onDeleteHabit={handleDeleteHabit} 
+                onUpdateUser={handleUpdateUser} 
+                onSetPriorityHabit={handleSetPriorityHabit}
+                levelUpInfo={levelUpInfo}
+                onCloseLevelUpModal={() => setLevelUpInfo(null)}
+                onEvolveHabit={handleEvolveHabit}
+                onCreateSquad={handleCreateSquad}
+                onRequestToJoinSquad={handleRequestToJoinSquad}
+                onVoteOnJoinRequest={handleVoteOnJoinRequest}
+                onVoteToKick={handleVoteToKick}
+                dailyHuddleData={dailyHuddleData}
+                showDailyHuddle={showDailyHuddle}
+                onEnergySelect={handleEnergySelect}
+                onNudge={handleNudge}
+                onCompleteSquadQuest={handleCompleteSquadQuest}
+                onSendChatMessage={handleSendChatMessage}
+                onTriggerUpgrade={triggerUpgradeModal}
+                onCreateTeamChallenge={handleCreateTeamChallenge}
+            />
+            {showDailyHuddle && dailyHuddleData && user && (
+                <Chatbot 
+                    user={user} 
+                    habits={habits} 
+                    mode="huddle"
+                    huddleData={dailyHuddleData}
+                    onClose={() => setShowDailyHuddle(false)}
+                    onHuddleComplete={handleEnergySelect}
+                />
+            )}
+        </>
       ) : (
-        <Onboarding onComplete={handleOnboardingComplete} />
+        <Onboarding 
+            onComplete={handleOnboardingComplete} 
+            onTriggerUpgrade={triggerUpgradeModal}
+        />
       )}
       <div className="fixed top-4 right-4 z-[100] w-full max-w-sm">
         {toasts.map(toast => (
           <Toast key={toast.id} message={toast.message} type={toast.type} onClose={() => setToasts(p => p.filter(t => t.id !== toast.id))} />
         ))}
       </div>
+       {showUpgradeModal && (
+        <UpgradeModal 
+            reason={upgradeReason}
+            onClose={() => setShowUpgradeModal(false)}
+            onUpgrade={handleSimulateUpgrade}
+        />
+       )}
     </>
   );
 };

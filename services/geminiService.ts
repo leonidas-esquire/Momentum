@@ -5,6 +5,20 @@ import { BlueprintHabit, Habit, Mission, UserIdentity } from '../types';
 // The fallback logic and placeholder key have been removed.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+export const translateText = async (text: string, targetLanguage: string, sourceLanguage: string): Promise<string> => {
+    const prompt = `Translate the following text from the language with code "${sourceLanguage}" to the language with code "${targetLanguage}". Do not add any extra text, characters, or explanations. Just return the translated text.\n\nText to translate: "${text}"`;
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        return response.text.trim();
+    } catch (error) {
+        console.error("Error translating text:", error);
+        return `${text} (Could not translate)`;
+    }
+};
+
 export const generateWeeklyInsight = async (
   completionData: {
     totalCompletions: number;
@@ -397,4 +411,51 @@ export const generateMembershipPitch = async (
     console.error("Error generating membership pitch:", error);
     return `Hi team! I'm really excited about your squad's focus on becoming better ${goalIdentity}s. I'm committed to my habits and I believe joining "${squadName}" will help us all build incredible momentum together. I'd love to be a part of the team!`;
   }
+};
+
+export const generateSquadQuests = async (
+    goalIdentity: string,
+    language: string,
+): Promise<{ title: string; points: number }[]> => {
+    const prompt = `
+        You are a quest designer for a habit app. A squad's shared identity is "${goalIdentity}".
+        Generate 3 distinct, actionable, and short "Squad Quests" that a user can complete in 5-15 minutes.
+        The quests should be related to the squad's identity.
+        Each quest needs a 'title' and a 'points' value (between 100 and 250, based on perceived effort).
+        The 'title' must be in this language: ${language}.
+        Return a JSON array of objects, each with 'title' and 'points'. Do not include any other text or markdown.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            title: { type: Type.STRING },
+                            points: { type: Type.NUMBER },
+                        },
+                        required: ["title", "points"],
+                    },
+                },
+            },
+        });
+        const quests = JSON.parse(response.text.trim());
+        if (Array.isArray(quests)) {
+            return quests.slice(0, 3);
+        }
+        throw new Error("Response was not a JSON array.");
+    } catch (error) {
+        console.error(`Error generating squad quests for ${goalIdentity}:`, error);
+        return [
+            { title: `Share a ${goalIdentity} tip with the squad`, points: 100 },
+            { title: `Find one article about ${goalIdentity} success`, points: 150 },
+            { title: `Set a micro-goal for the team`, points: 200 },
+        ];
+    }
 };

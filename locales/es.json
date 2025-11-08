@@ -2,7 +2,8 @@
     "dashboard": {
         "header": {
             "title": "Hola, {{name}}",
-            "weeklyReview": "Revisión Semanal"
+            "weeklyReview": "Revisión Semanal",
+            "upgrade": "Subir a Pro"
         },
         "mission": {
             "title": "Misión de Momentum de esta semana",
@@ -46,6 +47,45 @@
         "cueBed": "Antes de dormir",
         "button": "Añadir Rutina"
     },
+    "squadHub": {
+        "joinFull": "Lleno",
+        "joinRequest": "Solicitar Unirse",
+        "pendingRequests": "Solicitudes Pendientes ({{count}})",
+        "wantsToJoin": "{{name}} quiere unirse",
+        "approvals": "{{count}} / 2 aprobaciones",
+        "deny": "Rechazar",
+        "approve": "Aprobar",
+        "approveDisabled": "No se puede aprobar, el escuadrón está lleno.",
+        "kickVote": "Voto para Expulsar: {{voters}}/{{required}}",
+        "voteToRemove": "Votar para eliminar",
+        "voteToKick": "Votar para Expulsar",
+        "you": "(Tú)",
+        "tabActivity": "Actividad",
+        "tabChat": "Chat",
+        "tabQuests": "Misiones",
+        "tabLeaderboard": "Clasificación",
+        "tabMembers": "Miembros ({{count}})",
+        "noRipples": "¡Completa un hábito para iniciar la onda expansiva!",
+        "aiCoachTitle": "Entrenador IA del Escuadrón",
+        "aiCoachLoading": "Analizando la energía del escuadrón...",
+        "aiCoachButton": "Obtener Consejo",
+        "leaderboardTitle": "Top 10 Escuadrones Globales",
+        "membersTitle": "Miembros del Escuadrón",
+        "sharedMomentum": "Momentum Compartido",
+        "invite": "Invitar",
+        "questsTitle": "Misiones de Escuadrón de Hoy",
+        "questsLoading": "Generando las misiones de hoy...",
+        "questCompleteButton": "Completar Misión",
+        "questCompletedBy": "Completado por {{name}}",
+        "chatPlaceholder": "Escribe un mensaje...",
+        "chatSend": "Enviar",
+        "noMessages": "Aún no hay mensajes. ¡Sé el primero en saludar!",
+        "chatTranslating": "Traduciendo...",
+        "chatShowOriginal": "Mostrar original",
+        "chatShowTranslation": "Mostrar traducción",
+        "chatTranslationLimit": "Límite diario de traducciones alcanzado.",
+        "upgrade": "Mejorar"
+    },
     "dailyHuddle": {
         "oneThing": "Tu Única Cosa Hoy",
         "energyQuestion": "¿Cómo está tu energía hoy?",
@@ -53,5 +93,53 @@
         "energyMedium": "Media",
         "energyHigh": "Alta",
         "energyTip": "Selecciona 'Baja' y te ayudaremos a adaptar tu objetivo para mantener el momentum."
+    },
+    "upgradeModal": {
+        "title": "Subir a Momentum Pro",
+        "reason": {
+            "habit": "Has alcanzado el límite de 3 hábitos del plan gratuito.",
+            "identity": "Desbloquea la capacidad de cultivar múltiples identidades a la vez.",
+            "translation": "Rompe la barrera del idioma con traducciones ilimitadas."
+        },
+        "feature1": "Hábitos Ilimitados",
+        "feature1Desc": "Crea y sigue tantas rutinas como necesites.",
+        "feature2": "Múltiples Identidades",
+        "feature2Desc": "Desarrolla hasta 3 identidades simultáneamente.",
+        "feature3": "Traducciones de Chat Ilimitadas",
+        "feature3Desc": "Comunícate sin problemas con tu escuadrón global.",
+        "feature4": "Escudos de Momentum Mensuales",
+        "feature4Desc": "Protege tus rachas más importantes automáticamente.",
+        "cta": "Desbloquear Pro Ahora",
+        "close": "Quizás Más Tarde"
+    },
+    "teamHub": {
+        "title": "Centro de Equipo",
+        "challengeTitle": "Desafío de Equipo Activo",
+        "leaderboardTitle": "Clasificación del Equipo",
+        "rank": "Rango",
+        "member": "Miembro",
+        "completions": "Completados"
+    },
+    "adminDashboard": {
+        "title": "Panel de Admin de Equipo",
+        "statsTitle": "Análisis del Equipo (Privacidad Primero)",
+        "totalMembers": "Miembros Totales",
+        "activeMembers": "Miembros Activos (Últimos 7 días)",
+        "completionRate": "Tasa de Finalización Promedio",
+        "membersTitle": "Gestionar Miembros",
+        "inviteMember": "Invitar Nuevo Miembro",
+        "remove": "Eliminar",
+        "challengesTitle": "Gestionar Desafíos de Equipo",
+        "createChallenge": "Crear Nuevo Desafío",
+        "challengeForm": {
+            "title": "Título del Desafío",
+            "titlePlaceholder": "Ej: Iniciativa de Bienestar Q4",
+            "description": "Descripción",
+            "descriptionPlaceholder": "Una descripción corta y motivadora para el equipo.",
+            "habitCategory": "Categoría de Hábito",
+            "habitCategoryPlaceholder": "Ej: Mindfulness, Ejercicio, Lectura",
+            "target": "Objetivo de Conclusiones Totales",
+            "createButton": "Lanzar Desafío"
+        }
     }
 }

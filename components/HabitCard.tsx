@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Habit } from '../types';
 import { Icon } from './Icon';
+import { playCompletionSound, triggerVibration } from '../utils/feedback';
 
 interface HabitCardProps {
   habit: Habit;
@@ -11,12 +12,46 @@ interface HabitCardProps {
   isPriority: boolean;
 }
 
+const Confetti: React.FC = () => (
+  <>
+    {[...Array(10)].map((_, i) => (
+      <div
+        key={i}
+        className="absolute w-2 h-2 bg-brand-primary rounded-full animate-confetti-burst"
+        style={{
+          left: '50%',
+          top: '50%',
+          transform: `rotate(${Math.random() * 360}deg) translateX(${Math.random() * 50}px)`,
+          animationDelay: `${Math.random() * 0.2}s`,
+          backgroundColor: ['#8A42D6', '#22C55E', '#F97316', '#3b82f6'][Math.floor(Math.random() * 4)],
+        }}
+      />
+    ))}
+  </>
+);
+
+
 export const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onDelete, onSetPriority, isCompletedToday, isPriority }) => {
   const { title, description, identityTag, cue, streak, momentumShields, comebackChallenge, microVersion } = habit;
+  const [isCelebrating, setIsCelebrating] = useState(false);
+
+  const handleComplete = (id: string) => {
+    if (isCompletedToday || isCelebrating) return;
+
+    setIsCelebrating(true);
+    playCompletionSound();
+    triggerVibration();
+
+    setTimeout(() => {
+      onComplete(id);
+      setIsCelebrating(false);
+    }, 800); // Match confetti animation duration
+  };
+
 
   if (comebackChallenge?.isActive) {
       return (
-        <div className={`bg-brand-warning/10 border-2 border-dashed border-brand-warning rounded-xl p-4 md:p-6 flex items-center justify-between transition-all duration-300`}>
+        <div className={`relative bg-brand-warning/10 border-2 border-dashed border-brand-warning rounded-xl p-4 md:p-6 flex items-center justify-between transition-all duration-300`}>
              <div className="flex-grow">
                 <div className="flex items-center gap-2 mb-2">
                    <Icon name="arrow-uturn-left" className="w-5 h-5 text-brand-warning" />
@@ -28,15 +63,16 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onDelet
                 </p>
              </div>
               <button
-                onClick={() => onComplete(habit.id)}
-                disabled={isCompletedToday}
-                className={`w-16 h-16 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-300 transform
+                onClick={() => handleComplete(habit.id)}
+                disabled={isCompletedToday || isCelebrating}
+                className={`relative w-16 h-16 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-300 transform
                     ${isCompletedToday 
                     ? 'bg-brand-safe text-white scale-100' 
                     : 'bg-brand-warning text-white hover:bg-opacity-80 hover:scale-110'}`}
                 aria-label={`Complete habit for comeback: ${title}`}
                 >
                 <Icon name="check" className="w-8 h-8" />
+                {isCelebrating && <Confetti />}
             </button>
         </div>
       );
@@ -91,15 +127,16 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onDelet
           <Icon name="trash" className="w-5 h-5" />
         </button>
         <button
-          onClick={() => onComplete(habit.id)}
-          disabled={isCompletedToday}
-          className={`w-16 h-16 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-300 transform
+          onClick={() => handleComplete(habit.id)}
+          disabled={isCompletedToday || isCelebrating}
+          className={`relative w-16 h-16 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-300 transform
             ${isCompletedToday 
               ? 'bg-brand-safe text-white scale-100' 
               : 'bg-brand-bg border-2 border-brand-secondary text-brand-text-muted hover:bg-brand-primary hover:border-brand-primary hover:text-white hover:scale-110'}`}
           aria-label={`Complete habit: ${title}`}
         >
-          <Icon name="check" className="w-8 h-8" />
+          <Icon name="check" className={`w-8 h-8 transition-transform duration-200 ${isCelebrating ? 'scale-125' : 'scale-100'}`} />
+          {isCelebrating && <Confetti />}
         </button>
       </div>
     </div>
