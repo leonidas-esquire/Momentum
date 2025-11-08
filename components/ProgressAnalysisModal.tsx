@@ -99,21 +99,20 @@ export const ProgressAnalysisModal: React.FC<ProgressAnalysisModalProps> = ({ us
     fetchReport();
   }, [user, habits, language]);
 
-  const handleExportToPDF = async () => {
+ const handleExportToPDF = async () => {
     const { jsPDF } = jspdf;
     const content = reportContentRef.current;
-    if (!content || !content.parentElement) return;
+    if (!content) return;
 
     // --- PDF Styling Constants ---
     const BRAND_COLOR = '#8A42D6';
     const TEXT_COLOR = '#E4E4E6';
     const BG_COLOR = '#1B1B1F';
     const Muted_COLOR = '#A0A0B0';
-    const PAGE_MARGIN_X = 20; // Horizontal margin
-    const HEADER_Y = 15; // Header Y position from top
-    const FOOTER_Y = 15; // Footer Y position from bottom
-    const CONTENT_TOP_Y = 30; // Increased top margin for content
-    const CONTENT_BOTTOM_Y = 30; // Increased bottom margin for content
+    const PAGE_MARGIN_X = 20;
+    const PAGE_MARGIN_Y = 25; // Ample vertical margin
+    const HEADER_Y = 15;
+    const FOOTER_Y = 15;
 
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -148,56 +147,44 @@ export const ProgressAnalysisModal: React.FC<ProgressAnalysisModalProps> = ({ us
     pdf.setFontSize(12);
     pdf.setTextColor(Muted_COLOR);
     pdf.text(`Report Generated: ${new Date().toLocaleDateString()}`, PAGE_MARGIN_X, pdfHeight - 30);
+    
+    // --- 2. Use pdf.html() for robust, auto-paginated content ---
+    
+    // Temporarily apply a background color to the container for html2canvas
+    const originalStyle = content.style.cssText;
+    content.style.backgroundColor = BG_COLOR;
+    
+    // Add a new page for the report content to begin
+    pdf.addPage();
 
-    // --- 2. Capture Content with html2canvas ---
-    const canvas = await html2canvas(content, { 
+    await pdf.html(content, {
+      callback: (doc: any) => {
+        const pageCount = doc.internal.getNumberOfPages();
+        // Add headers and footers to all pages after the cover page
+        for (let i = 2; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(10);
+          doc.setTextColor(Muted_COLOR);
+          // Header
+          doc.text("Momentum: The Irresistible Habit App", PAGE_MARGIN_X, HEADER_Y);
+          // Footer
+          doc.text("Your Momentum App - Progress Report", PAGE_MARGIN_X, pdfHeight - FOOTER_Y);
+          doc.text(`Page ${i} of ${pageCount}`, pdfWidth - PAGE_MARGIN_X, pdfHeight - FOOTER_Y, { align: 'right' });
+        }
+        
+        // Revert styles on the original DOM element
+        content.style.cssText = originalStyle;
+        
+        doc.save(`Momentum_AI_Report_${user.name.replace(/\s/g, '_')}.pdf`);
+      },
+      margin: [PAGE_MARGIN_Y, PAGE_MARGIN_X, PAGE_MARGIN_Y, PAGE_MARGIN_X],
+      autoPaging: 'text', // Use 'text' to avoid splitting lines of text
+      html2canvas: {
         scale: 2,
+        useCORS: true,
         backgroundColor: BG_COLOR,
-        useCORS: true
+      },
     });
-    const imgData = canvas.toDataURL('image/png');
-    
-    const imgProps = pdf.getImageProperties(imgData);
-    const contentWidth = pdfWidth - PAGE_MARGIN_X * 2;
-    const scaledImgHeight = (imgProps.height * contentWidth) / imgProps.width;
-    
-    // --- 3. Add Header and Footer ---
-    const addHeader = (pdfInstance: any) => {
-        pdfInstance.setFontSize(10);
-        pdfInstance.setTextColor(Muted_COLOR);
-        pdfInstance.text("Momentum: The Irresistible Habit App", PAGE_MARGIN_X, HEADER_Y);
-    };
-
-    const addFooter = (pdfInstance: any, pageNum: number, totalPages: number) => {
-        pdfInstance.setFontSize(10);
-        pdfInstance.setTextColor(Muted_COLOR);
-        pdfInstance.text("Your Momentum App - Progress Report", PAGE_MARGIN_X, pdfHeight - FOOTER_Y);
-        pdfInstance.text(`Page ${pageNum} of ${totalPages}`, pdfWidth - PAGE_MARGIN_X, pdfHeight - FOOTER_Y, { align: 'right' });
-    };
-
-    // --- 4. Paginate and Add Content ---
-    const pageContentHeight = pdfHeight - CONTENT_TOP_Y - CONTENT_BOTTOM_Y;
-    const totalPages = Math.ceil(scaledImgHeight / pageContentHeight);
-    
-    for (let i = 0; i < totalPages; i++) {
-        pdf.addPage();
-        addHeader(pdf);
-        addFooter(pdf, i + 2, totalPages + 1);
-
-        // Define a clipping region for the content to prevent overflow
-        pdf.saveGraphicsState();
-        pdf.rect(PAGE_MARGIN_X, CONTENT_TOP_Y, contentWidth, pageContentHeight);
-        pdf.clip();
-        
-        // Position the full-size image. The clipping path will only show the relevant part.
-        const yPos = CONTENT_TOP_Y - (i * pageContentHeight);
-        pdf.addImage(imgData, 'PNG', PAGE_MARGIN_X, yPos, contentWidth, scaledImgHeight);
-        
-        // Restore graphics state to remove clipping for the next page
-        pdf.restoreGraphicsState();
-    }
-    
-    pdf.save(`Momentum_AI_Report_${user.name.replace(/\s/g, '_')}.pdf`);
   };
 
   return (
