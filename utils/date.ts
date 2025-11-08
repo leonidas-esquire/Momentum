@@ -11,6 +11,14 @@ export const isToday = (someDate: string | null): boolean => {
     return isSameDay(today, date);
 };
 
+export const isYesterday = (someDate: string | null): boolean => {
+    if (!someDate) return false;
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const date = new Date(someDate);
+    return isSameDay(yesterday, date);
+};
+
 export const getTodayDateString = (): string => {
     return new Date().toISOString().split('T')[0];
 };

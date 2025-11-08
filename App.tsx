@@ -6,6 +6,9 @@ import { UpgradeModal } from './components/UpgradeModal';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { ChapterUnlockModal } from './components/ChapterUnlockModal';
 import { Chatbot } from './components/Chatbot';
+import { RallyPointModal } from './components/RallyPointModal';
+import { isToday, isYesterday } from './utils/date';
+
 
 // MOCK DATA - In a real application, this would come from a backend API
 export const MOCK_SQUADS: Squad[] = [
@@ -20,7 +23,7 @@ export const MOCK_QUESTS: SquadQuest[] = [
     {id: 'q2', title: 'Achieve a 5-day collective streak', points: 250, isCompleted: false, completedBy: undefined},
 ];
 export const MOCK_SAGA: SquadSaga = { title: 'The Shadow of Procrastination', chapter: 1, lore: 'A creeping dread threatens the productivity of the land. Only by combining your momentum can you push it back.', milestones: [{description: 'Defeat 5 Demotivators', isCompleted: false}], boss: { name: 'The Snooze Fiend', hp: 1000, maxHp: 1000 }};
-export const MOCK_CHAT: ChatMessage[] = [];
+export let MOCK_CHAT: ChatMessage[] = [];
 export const MOCK_CHALLENGES: TeamChallenge[] = [];
 export const MOCK_ASSIST_REQUESTS: AssistRequest[] = [
     {id: 'ar1', requesterId: 'user2', requesterName: 'Jordan', requesterIdentity: 'The Learner', habitTitle: 'Read for 30 minutes', timestamp: Date.now()}
@@ -34,6 +37,7 @@ const App: React.FC = () => {
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showChapterUnlock, setShowChapterUnlock] = useState<{identity: UserIdentity, chapter: any} | null>(null);
   const [showChatbot, setShowChatbot] = useState(false);
+  const [rallyPointHabit, setRallyPointHabit] = useState<Habit | null>(null);
   
   // Load data from localStorage on initial render
   useEffect(() => {
@@ -44,7 +48,21 @@ const App: React.FC = () => {
         setUser(JSON.parse(storedUser));
       }
       if (storedHabits) {
-        setHabits(JSON.parse(storedHabits));
+        const loadedHabits: Habit[] = JSON.parse(storedHabits);
+        
+        // Rally Point check
+        const habitForRally = loadedHabits.find(h => 
+            h.streak >= 7 && 
+            h.lastCompleted &&
+            !isToday(h.lastCompleted) && 
+            !isYesterday(h.lastCompleted)
+        );
+
+        if (habitForRally) {
+            setRallyPointHabit(habitForRally);
+        }
+
+        setHabits(loadedHabits);
       }
     } catch (error) {
       console.error("Failed to parse data from localStorage", error);
@@ -102,7 +120,28 @@ const App: React.FC = () => {
       localStorage.removeItem('momentum_habits');
       setUser(null);
       setHabits([]);
-  }
+  };
+
+  const handleRallyPointComplete = (rallyBeaconLit: boolean, habit: Habit) => {
+    if (rallyBeaconLit && user) {
+        const beaconMessage: ChatMessage = {
+            id: `rally-${Date.now()}`,
+            userId: user.id,
+            userName: user.name,
+            text: `${user.name} is lighting a Rally Beacon and is focused on getting back on track! Let's send them some energy! 🔥`,
+            timestamp: Date.now(),
+            isRallyBeacon: true,
+        };
+        MOCK_CHAT.push(beaconMessage); // In a real app, this would be an API call
+    }
+    
+    // Reset the habit's streak
+    setHabits(prev => prev.map(h => 
+        h.id === habit.id ? { ...h, streak: 0, missedDays: 0 } : h
+    ));
+
+    setRallyPointHabit(null); // Close the modal
+  };
 
   if (!user || !user.onboardingCompleted) {
     return (
@@ -134,6 +173,7 @@ const App: React.FC = () => {
       {showPrivacyPolicy && <PrivacyPolicyModal onClose={() => setShowPrivacyPolicy(false)} />}
       {showChapterUnlock && <ChapterUnlockModal identity={showChapterUnlock.identity} newChapter={showChapterUnlock.chapter} onClose={() => setShowChapterUnlock(null)} />}
       {showChatbot && <Chatbot user={user} habits={habits} onClose={() => setShowChatbot(false)} />}
+      {rallyPointHabit && <RallyPointModal habit={rallyPointHabit} onComplete={(beaconLit) => handleRallyPointComplete(beaconLit, rallyPointHabit)} />}
     </>
   );
 };

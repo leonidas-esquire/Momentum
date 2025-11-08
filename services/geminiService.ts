@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { BlueprintHabit } from '../types';
+import { BlueprintHabit, Habit, RallyPointData } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -171,5 +171,73 @@ export const generateAssistMessages = async (
             `Keep pushing towards your goal!`,
             `One step at a time makes a big difference.`
         ];
+    }
+};
+
+export const generateRallyPoint = async (habit: Habit, language: string): Promise<RallyPointData> => {
+    const prompt = `
+        You are a master habit coach, specializing in compassionate recovery after a setback.
+        A user just broke a streak for their habit: "${habit.title}". This habit helps them become "The ${habit.identityTag}".
+        Your task is to create a "Rally Point" to help them get back on track.
+
+        1.  First, create one empathetic, non-judgmental multiple-choice question to diagnose the issue. The question should be about the *hurdle* they faced.
+        2.  Then, create three distinct, short, multiple-choice options for that question.
+        3.  Finally, for each option, create a "Phoenix Protocol": a concrete, temporary, one-day micro-plan that makes restarting effortless. The protocol should be a single, encouraging sentence.
+
+        Respond in the language with this code: ${language}.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        question: { type: Type.STRING },
+                        options: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    text: { type: Type.STRING },
+                                    protocol: { type: Type.STRING },
+                                },
+                                required: ['text', 'protocol'],
+                            }
+                        }
+                    },
+                    required: ['question', 'options']
+                }
+            }
+        });
+        const jsonText = response.text.trim();
+        const data = JSON.parse(jsonText);
+        // Ensure we only have 3 options max
+        if (data.options.length > 3) {
+            data.options = data.options.slice(0, 3);
+        }
+        return data;
+    } catch (error) {
+        console.error('Error generating Rally Point:', error);
+        return {
+            question: "It's okay to stumble. What was the biggest hurdle yesterday?",
+            options: [
+                {
+                    text: "I didn't have the time.",
+                    protocol: "No problem. For tomorrow, your mission is to do the habit for just 2 minutes. Let's make it easy to start again."
+                },
+                {
+                    text: "I forgot about it.",
+                    protocol: "Got it. For tomorrow, your mission is to set a reminder alarm on your phone right now. Let's make it impossible to forget."
+                },
+                {
+                    text: "I didn't feel motivated.",
+                    protocol: "That's completely normal. For tomorrow, your mission is to simply get your tools ready for the habit, nothing more. Let's lower the pressure."
+                }
+            ]
+        };
     }
 };

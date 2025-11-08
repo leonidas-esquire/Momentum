@@ -189,5 +189,16 @@
   },
   "dailyHuddle": {
       "oneThing": "Your One Thing Today"
+  },
+  "rallyPoint": {
+    "title": "Every Master Stumbles.",
+    "subtitle": "You built an incredible {{streak}}-day streak on '{{habit}}'. Let's get you back up.",
+    "loading": "Analyzing the path back...",
+    "protocolTitle": "Your Phoenix Protocol",
+    "beacon": {
+        "title": "Light a Rally Beacon",
+        "subtitle": "Let your squad know you're getting back on track so they can send you some energy."
+    },
+    "button": "I'm Ready"
   }
 }

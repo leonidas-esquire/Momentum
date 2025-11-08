@@ -112,6 +112,7 @@ export interface ChatMessage {
     text: string;
     timestamp: number;
     isHuddleMessage?: boolean;
+    isRallyBeacon?: boolean;
 }
 
 export interface MentorIntervention {
@@ -168,4 +169,12 @@ export interface AssistRequest {
   requesterIdentity: string;
   habitTitle: string;
   timestamp: number;
+}
+
+export interface RallyPointData {
+  question: string;
+  options: {
+    text: string;
+    protocol: string;
+  }[];
 }

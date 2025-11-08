@@ -189,5 +189,16 @@
   },
   "dailyHuddle": {
       "oneThing": "Tu Única Cosa Hoy"
+  },
+  "rallyPoint": {
+    "title": "Todo Maestro Tropieza.",
+    "subtitle": "Construiste una increíble racha de {{streak}} días en '{{habit}}'. Vamos a levantarte.",
+    "loading": "Analizando el camino de vuelta...",
+    "protocolTitle": "Tu Protocolo Fénix",
+    "beacon": {
+        "title": "Encender una Baliza de Ánimo",
+        "subtitle": "Hazle saber a tu escuadrón que estás volviendo al buen camino para que puedan enviarte energía."
+    },
+    "button": "Estoy Listo"
   }
 }

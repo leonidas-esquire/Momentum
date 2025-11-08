@@ -22,6 +22,18 @@ const HuddleMessage: React.FC<{ message: ChatMessage }> = ({ message }) => {
     );
 };
 
+const RallyBeaconMessage: React.FC<{ message: ChatMessage }> = ({ message }) => {
+    return (
+        <div className="bg-brand-warning/10 border-2 border-dashed border-brand-warning/50 rounded-xl p-4 my-4 text-center">
+            <p className="font-semibold text-brand-warning">
+                <Icon name="fire" className="w-5 h-5 inline-block mr-2" />
+                {message.text}
+            </p>
+        </div>
+    );
+};
+
+
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, messages, onSendMessage }) => {
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -47,6 +59,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, messages, on
                 {messages.map((msg) => {
                     if (msg.isHuddleMessage) {
                         return <HuddleMessage key={msg.id} message={msg} />;
+                    }
+
+                    if (msg.isRallyBeacon) {
+                        return <RallyBeaconMessage key={msg.id} message={msg} />;
                     }
 
                     const isCurrentUser = msg.userId === user.id;
