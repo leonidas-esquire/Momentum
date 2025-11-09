@@ -12,7 +12,7 @@ interface OnboardingProps {
     onOnboardingComplete: (user: Omit<User, 'id' | 'subscription' | 'email'>, habits: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields' | 'missedDays' | 'isFavorite'>[]) => void;
 }
 
-const Onboarding: React.FC<OnboardingProps> = ({ onOnboardingComplete }) => {
+const Onboarding: React.FC<OnboardingProps> = ({ initialEmail, onOnboardingComplete }) => {
     const [step, setStep] = useState(1);
     const [name, setName] = useState('');
     const [selectedIdentity, setSelectedIdentity] = useState<Identity | null>(null);

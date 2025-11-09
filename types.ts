@@ -43,6 +43,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  role?: 'founder' | 'user';
   selectedIdentities: UserIdentity[];
   squadId?: string;
   teamId?: string;

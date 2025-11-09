@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Habit } from './types';
+import { User, Habit, TeamChallenge, UserIdentity, Team, Financials } from './types';
 import Onboarding from './components/Onboarding';
 import Dashboard from './components/Dashboard';
 import LoginScreen from './components/LoginScreen';
@@ -8,6 +8,32 @@ import { useTheme } from './contexts/ThemeContext';
 const App: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
     const [habits, setHabits] = useState<Habit[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>(() => {
+        const saved = localStorage.getItem('momentum_all_users');
+        if (saved) return JSON.parse(saved);
+        return [
+             { id: 'user-1', name: 'Alice', email: 'alice@momentum.io', subscription: { plan: 'pro', status: 'active' }, selectedIdentities: [{id: 'creator', name: 'The Creator', level: 5, xp: 50, description: 'Brings ideas to life', image: ''} as UserIdentity], language: 'en', theme: 'dark', voicePreference: 'Aura', role: 'user'},
+             { id: 'user-2', name: 'Bob', email: 'bob@momentum.io', subscription: { plan: 'free', status: 'active' }, selectedIdentities: [{id: 'achiever', name: 'The Achiever', level: 2, xp: 80, description: 'Hits goals', image: ''} as UserIdentity], language: 'en', theme: 'dark', voicePreference: 'Orion', role: 'user' },
+             { id: 'user-3', name: 'Charlie', email: 'charlie@momentum.io', subscription: { plan: 'team', status: 'active' }, teamId: 'team-1', selectedIdentities: [{id: 'leader', name: 'The Leader', level: 8, xp: 120, description: 'Inspires others', image: ''} as UserIdentity], language: 'en', theme: 'dark', voicePreference: 'Zephyr', role: 'user' },
+        ];
+    });
+    const [teams, setTeams] = useState<Team[]>(() => {
+        return [
+            { id: 'team-1', name: 'Momentum Core', members: [{ userId: 'user-3', name: 'Charlie', totalCompletions: 150 }], subscriptionStatus: 'active' }
+        ];
+    });
+    const [financials, setFinancials] = useState<Financials>({
+        revenuePerProUser: 9,
+        revenuePerTeamMember: 8,
+        monthlyCosts: 15,
+    });
+    const [teamChallenges, setTeamChallenges] = useState<TeamChallenge[]>(() => {
+        const saved = localStorage.getItem('momentum_challenges');
+        if (saved) return JSON.parse(saved);
+        return [
+            { id: 'challenge-1', title: 'Q3 Creator Push', description: 'Log 100 total "Creator" habits as a team.', targetCompletions: 100, currentCompletions: 42, isActive: true }
+        ];
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [view, setView] = useState<'login' | 'onboarding' | 'dashboard'>('login');
     const [onboardingEmail, setOnboardingEmail] = useState<string>('');
@@ -45,6 +71,7 @@ const App: React.FC = () => {
             id: 'founder-001',
             name: 'Leonidas',
             email: 'leonidas.esquire@gmail.com',
+            role: 'founder',
             selectedIdentities: [],
             subscription: { plan: 'team', status: 'active' },
             language: 'en',
@@ -52,7 +79,6 @@ const App: React.FC = () => {
             voicePreference: 'Orion'
         };
         setUser(founderUser);
-        setHabits([]); // Founders don't have personal habits in this view
         localStorage.setItem('momentum_user', JSON.stringify(founderUser));
         setView('dashboard');
     };
@@ -62,6 +88,7 @@ const App: React.FC = () => {
             ...newUser,
             id: `user-${Date.now()}`,
             email: onboardingEmail,
+            role: 'user',
             subscription: { plan: 'free', status: 'active' },
             selectedIdentities: newUser.selectedIdentities.map(identity => ({
                 ...identity,
@@ -82,8 +109,13 @@ const App: React.FC = () => {
         }));
         setUser(fullUser);
         setHabits(fullHabits);
+        
+        const updatedAllUsers = [...allUsers, fullUser];
+        setAllUsers(updatedAllUsers);
+
         localStorage.setItem('momentum_user', JSON.stringify(fullUser));
         localStorage.setItem('momentum_habits', JSON.stringify(fullHabits));
+        localStorage.setItem('momentum_all_users', JSON.stringify(updatedAllUsers));
         setView('dashboard');
     };
     
@@ -97,10 +129,28 @@ const App: React.FC = () => {
         localStorage.setItem('momentum_habits', JSON.stringify(updatedHabits));
     }
 
+    const handleUpdateUsers = (updatedUsers: User[]) => {
+        setAllUsers(updatedUsers);
+        localStorage.setItem('momentum_all_users', JSON.stringify(updatedUsers));
+    };
+
+    const handleCreateChallenge = (challengeData: Omit<TeamChallenge, 'id' | 'currentCompletions' | 'isActive'>) => {
+        const newChallenge: TeamChallenge = {
+            ...challengeData,
+            id: `challenge-${Date.now()}`,
+            currentCompletions: 0,
+            isActive: true
+        };
+        const updatedChallenges = [newChallenge, ...teamChallenges].map(c => ({...c, isActive: c.id === newChallenge.id}));
+        setTeamChallenges(updatedChallenges);
+        localStorage.setItem('momentum_challenges', JSON.stringify(updatedChallenges));
+    };
+
     const handleLogout = () => {
         setUser(null);
         setHabits([]);
-        localStorage.clear();
+        localStorage.removeItem('momentum_user');
+        localStorage.removeItem('momentum_habits');
         setView('login');
     };
 
@@ -117,10 +167,23 @@ const App: React.FC = () => {
     }
 
     if (view === 'dashboard' && user) {
-        return <Dashboard user={user} habits={habits} onUpdateHabits={handleUpdateHabits} onUpdateUser={handleUpdateUser} onLogout={handleLogout} />;
+        return (
+            <Dashboard 
+                user={user} 
+                habits={habits}
+                allUsers={allUsers}
+                teams={teams}
+                financials={financials}
+                teamChallenges={teamChallenges}
+                onUpdateHabits={handleUpdateHabits}
+                onUpdateUser={handleUpdateUser}
+                onUpdateUsers={handleUpdateUsers}
+                onCreateChallenge={handleCreateChallenge}
+                onLogout={handleLogout} 
+            />
+        );
     }
     
-    // Fallback to login if something is wrong
     return <LoginScreen onStartOnboarding={handleStartOnboarding} onFounderLogin={handleFounderLogin} />;
 };
 

@@ -13,7 +13,7 @@ export const FinancialsWidget: React.FC<FinancialsWidgetProps> = ({ financials, 
   const { t } = useContext(LanguageContext)!;
 
   const { totalRevenue, net, status, statusColor, statusIcon, progressPercentage } = useMemo(() => {
-    const proUsersCount = allUsers.filter(u => u.subscription.plan === 'pro').length;
+    const proUsersCount = allUsers.filter(u => u.subscription.plan === 'pro' && u.subscription.status === 'active').length;
     const teamMembersCount = teams.reduce((acc, team) => {
         if (team.subscriptionStatus === 'active') {
             return acc + team.members.length;
@@ -40,7 +40,7 @@ export const FinancialsWidget: React.FC<FinancialsWidgetProps> = ({ financials, 
       statusIcon = 'scale';
     }
     
-    const progressPercentage = Math.min((totalRevenue / financials.monthlyCosts) * 100, 100);
+    const progressPercentage = financials.monthlyCosts > 0 ? Math.min((totalRevenue / financials.monthlyCosts) * 100, 100) : 0;
 
     return { totalRevenue, net, status, statusColor, statusIcon, progressPercentage };
   }, [financials, allUsers, teams, t]);

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { User, Habit } from '../types';
+import { User, Habit, TeamChallenge, Team, Financials } from '../types';
 import { HabitCard } from './HabitCard';
 import { HabitBuilder } from './HabitBuilder';
 import { DeleteConfirmation } from './DeleteConfirmation';
@@ -9,16 +9,23 @@ import { SettingsModal } from './SettingsModal';
 import { PrivacyPolicyModal } from './PrivacyPolicyModal';
 import { TermsOfServiceModal } from './TermsOfServiceModal';
 import { Icon } from './Icon';
+import AdminDashboard from './AdminDashboard';
 
 interface DashboardProps {
   user: User;
   habits: Habit[];
+  allUsers: User[];
+  teams: Team[];
+  financials: Financials;
+  teamChallenges: TeamChallenge[];
   onUpdateHabits: (habits: Habit[]) => void;
   onUpdateUser: (user: User) => void;
+  onUpdateUsers: (users: User[]) => void;
+  onCreateChallenge: (challenge: Omit<TeamChallenge, 'id' | 'currentCompletions' | 'isActive'>) => void;
   onLogout: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, habits, onUpdateHabits, onUpdateUser, onLogout }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, habits, allUsers, teams, financials, teamChallenges, onUpdateHabits, onUpdateUser, onUpdateUsers, onCreateChallenge, onLogout }) => {
     const [showHabitBuilder, setShowHabitBuilder] = useState(false);
     const [habitToEdit, setHabitToEdit] = useState<Habit | null>(null);
     const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null);
@@ -33,10 +40,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, habits, onUpdateHabits, onU
 
     const handleSaveHabit = (habitData: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields' | 'missedDays'> | Habit) => {
         if ('id' in habitData) {
-            // Editing existing habit
             onUpdateHabits(habits.map(h => h.id === habitData.id ? { ...h, ...habitData } : h));
         } else {
-            // Adding new habit
             const newHabit: Habit = {
                 ...habitData,
                 id: `habit-${Date.now()}`,
@@ -55,7 +60,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, habits, onUpdateHabits, onU
     };
     
     const handleComplete = (id: string) => {
-        // This is a simplified implementation
         onUpdateHabits(habits.map(h => h.id === id ? { ...h, lastCompleted: new Date().toISOString() } : h));
     };
     
@@ -65,9 +69,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, habits, onUpdateHabits, onU
 
     const handleDelete = (id: string) => {
         const habit = habits.find(h => h.id === id);
-        if (habit) {
-            setHabitToDelete(habit);
-        }
+        if (habit) setHabitToDelete(habit);
     };
     
     const confirmDelete = () => {
@@ -88,6 +90,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, habits, onUpdateHabits, onU
             setShowHabitBuilder(true);
         }
     };
+
+    if (user.role === 'founder') {
+        return (
+            <AdminDashboard 
+                allUsers={allUsers}
+                teams={teams}
+                financials={financials}
+                teamChallenges={teamChallenges}
+                onUpdateUsers={onUpdateUsers}
+                onCreateChallenge={onCreateChallenge}
+                onLogout={onLogout}
+            />
+        );
+    }
 
     return (
         <div className="bg-brand-bg min-h-screen text-brand-text p-4 md:p-8">
@@ -155,9 +171,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, habits, onUpdateHabits, onU
                     onClose={() => setShowSettings(false)}
                     onUpdateUser={onUpdateUser}
                     onLogout={onLogout}
-                    onDeleteAccount={() => {
-                        onLogout();
-                    }}
+                    onDeleteAccount={onLogout}
                     onShowPrivacyPolicy={() => setShowPrivacy(true)}
                     onShowTermsOfService={() => setShowTerms(true)}
                     onShowPlaybook={() => {}}
