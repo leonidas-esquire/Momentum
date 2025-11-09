@@ -6,6 +6,8 @@ import { DeleteConfirmation } from './DeleteConfirmation';
 import { WeeklyReview } from './WeeklyReview';
 import { IdentityStatus } from './IdentityStatus';
 import { SettingsModal } from './SettingsModal';
+import { PrivacyPolicyModal } from './PrivacyPolicyModal';
+import { TermsOfServiceModal } from './TermsOfServiceModal';
 import { Icon } from './Icon';
 
 interface DashboardProps {
@@ -13,14 +15,17 @@ interface DashboardProps {
   habits: Habit[];
   onUpdateHabits: (habits: Habit[]) => void;
   onUpdateUser: (user: User) => void;
+  onLogout: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, habits, onUpdateHabits, onUpdateUser }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, habits, onUpdateHabits, onUpdateUser, onLogout }) => {
     const [showHabitBuilder, setShowHabitBuilder] = useState(false);
     const [habitToEdit, setHabitToEdit] = useState<Habit | null>(null);
     const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null);
     const [showWeeklyReview, setShowWeeklyReview] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [showPrivacy, setShowPrivacy] = useState(false);
+    const [showTerms, setShowTerms] = useState(false);
 
     const sortedHabits = useMemo(() => {
         return [...habits].sort((a, b) => (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0));
@@ -149,15 +154,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, habits, onUpdateHabits, onU
                     user={user} 
                     onClose={() => setShowSettings(false)}
                     onUpdateUser={onUpdateUser}
+                    onLogout={onLogout}
                     onDeleteAccount={() => {
-                        localStorage.clear();
-                        window.location.reload();
+                        onLogout();
                     }}
-                    onShowPrivacyPolicy={() => {}}
-                    onShowTermsOfService={() => {}}
+                    onShowPrivacyPolicy={() => setShowPrivacy(true)}
+                    onShowTermsOfService={() => setShowTerms(true)}
                     onShowPlaybook={() => {}}
                 />
             )}
+            {showPrivacy && <PrivacyPolicyModal onClose={() => setShowPrivacy(false)} />}
+            {showTerms && <TermsOfServiceModal onClose={() => setShowTerms(false)} />}
         </div>
     );
 };

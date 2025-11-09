@@ -4,9 +4,12 @@ import { IDENTITY_ARCHETYPES } from '../constants';
 import { generateHabitBlueprint } from '../services/geminiService';
 import { LanguageContext } from '../contexts/LanguageContext';
 import { Icon } from './Icon';
+import { PrivacyPolicyModal } from './PrivacyPolicyModal';
+import { TermsOfServiceModal } from './TermsOfServiceModal';
 
 interface OnboardingProps {
-    onOnboardingComplete: (user: Omit<User, 'id' | 'subscription'>, habits: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields' | 'missedDays' | 'isFavorite'>[]) => void;
+    initialEmail: string;
+    onOnboardingComplete: (user: Omit<User, 'id' | 'subscription' | 'email'>, habits: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields' | 'missedDays' | 'isFavorite'>[]) => void;
 }
 
 const Onboarding: React.FC<OnboardingProps> = ({ onOnboardingComplete }) => {
@@ -16,12 +19,16 @@ const Onboarding: React.FC<OnboardingProps> = ({ onOnboardingComplete }) => {
     const [blueprintHabits, setBlueprintHabits] = useState<BlueprintHabit[]>([]);
     const [selectedHabits, setSelectedHabits] = useState<BlueprintHabit[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const { language, t } = useContext(LanguageContext)!;
+    const [agreedToTerms, setAgreedToTerms] = useState(false);
+    const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+    const [showPrivacy, setShowPrivacy] = useState(false);
+    const [showTerms, setShowTerms] = useState(false);
+    const { language } = useContext(LanguageContext)!;
 
     const handleSelectIdentity = async (identity: Identity) => {
         setSelectedIdentity(identity);
         setIsLoading(true);
-        setStep(2);
+        setStep(3);
         const habits = await generateHabitBlueprint(identity.name, language);
         setBlueprintHabits(habits);
         setSelectedHabits(habits);
@@ -41,7 +48,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ onOnboardingComplete }) => {
         
         const user = {
             name,
-            email: '',
             selectedIdentities: [selectedIdentity],
             language: language,
             theme: 'dark' as const,
@@ -59,54 +65,81 @@ const Onboarding: React.FC<OnboardingProps> = ({ onOnboardingComplete }) => {
     };
 
     return (
-        <div className="bg-brand-bg min-h-screen flex items-center justify-center p-4">
-            <div className="w-full max-w-md mx-auto">
-                {step === 1 && (
-                    <div className="text-center animate-fade-in">
-                        <h1 className="text-3xl font-bold mb-4">Welcome to Momentum</h1>
-                        <p className="text-lg text-brand-text-muted mb-8">Who are you becoming?</p>
-                        <div className="grid grid-cols-2 gap-4">
-                            {IDENTITY_ARCHETYPES.map(identity => (
-                                <button key={identity.id} onClick={() => handleSelectIdentity(identity)} className="bg-brand-surface p-4 rounded-lg hover:ring-2 ring-brand-primary transition-all">
-                                    <p className="font-bold">{identity.name}</p>
-                                    <p className="text-sm text-brand-text-muted">{identity.description}</p>
-                                </button>
-                            ))}
+        <>
+            <div className="bg-brand-bg min-h-screen flex items-center justify-center p-4">
+                <div className="w-full max-w-md mx-auto">
+                    {step === 1 && (
+                        <div className="text-center animate-fade-in">
+                            <h1 className="text-3xl font-bold mb-4">One Last Step...</h1>
+                            <p className="text-lg text-brand-text-muted mb-8">Please review and agree to our terms to continue.</p>
+                            <div className="space-y-4 text-left">
+                                <label className="flex items-start p-4 bg-brand-surface rounded-lg cursor-pointer">
+                                    <input type="checkbox" checked={agreedToTerms} onChange={() => setAgreedToTerms(!agreedToTerms)} className="mt-1 h-5 w-5 rounded border-brand-secondary text-brand-primary focus:ring-brand-primary" />
+                                    <span className="ml-3 text-brand-text">
+                                        I have read and agree to the <button onClick={() => setShowTerms(true)} className="font-semibold text-brand-primary hover:underline">Terms of Service</button>.
+                                    </span>
+                                </label>
+                                <label className="flex items-start p-4 bg-brand-surface rounded-lg cursor-pointer">
+                                    <input type="checkbox" checked={agreedToPrivacy} onChange={() => setAgreedToPrivacy(!agreedToPrivacy)} className="mt-1 h-5 w-5 rounded border-brand-secondary text-brand-primary focus:ring-brand-primary" />
+                                    <span className="ml-3 text-brand-text">
+                                        I have read and agree to the <button onClick={() => setShowPrivacy(true)} className="font-semibold text-brand-primary hover:underline">Privacy Policy</button>.
+                                    </span>
+                                </label>
+                            </div>
+                             <button onClick={() => setStep(2)} disabled={!agreedToPrivacy || !agreedToTerms} className="w-full mt-8 bg-brand-primary text-white font-bold py-3 px-6 rounded-full text-base hover:bg-opacity-80 transition-colors duration-300 flex items-center justify-center gap-2 disabled:bg-brand-secondary">
+                                Let's Begin <Icon name="arrow-right" className="w-5 h-5"/>
+                            </button>
                         </div>
-                    </div>
-                )}
-                {step === 2 && (
-                    <div className="animate-fade-in">
-                        <h2 className="text-2xl font-bold text-center mb-2">Here is your starting blueprint</h2>
-                        <p className="text-brand-text-muted text-center mb-6">Based on your identity as **{selectedIdentity?.name}**. Select the habits you'd like to start with.</p>
-                        {isLoading ? <p>Loading...</p> : (
-                            <div className="space-y-3 mb-6">
-                                {blueprintHabits.map((habit, index) => (
-                                    <div key={index} onClick={() => toggleHabitSelection(habit)} className={`p-4 rounded-lg cursor-pointer border-2 ${selectedHabits.some(h => h.title === habit.title) ? 'border-brand-primary bg-brand-primary/10' : 'border-brand-secondary bg-brand-surface'}`}>
-                                        <p className="font-bold">{habit.title}</p>
-                                        <p className="text-sm text-brand-text-muted">{habit.description}</p>
-                                    </div>
+                    )}
+                    {step === 2 && (
+                        <div className="text-center animate-fade-in">
+                            <h1 className="text-3xl font-bold mb-4">Welcome to Momentum</h1>
+                            <p className="text-lg text-brand-text-muted mb-8">Who are you becoming?</p>
+                            <div className="grid grid-cols-2 gap-4">
+                                {IDENTITY_ARCHETYPES.map(identity => (
+                                    <button key={identity.id} onClick={() => handleSelectIdentity(identity)} className="bg-brand-surface p-4 rounded-lg hover:ring-2 ring-brand-primary transition-all">
+                                        <p className="font-bold">{identity.name}</p>
+                                        <p className="text-sm text-brand-text-muted">{identity.description}</p>
+                                    </button>
                                 ))}
                             </div>
-                        )}
-                         <div>
-                            <label className="block text-sm font-medium text-brand-text-muted mb-2">What should we call you?</label>
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Your Name"
-                                className="w-full bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
-                                required
-                            />
                         </div>
-                        <button onClick={handleComplete} disabled={!name.trim() || selectedHabits.length === 0} className="w-full mt-6 bg-brand-primary text-white font-bold py-3 px-6 rounded-full text-base hover:bg-opacity-80 transition-colors duration-300 flex items-center justify-center gap-2 disabled:bg-brand-secondary">
-                            Let's Go <Icon name="arrow-right" className="w-5 h-5"/>
-                        </button>
-                    </div>
-                )}
+                    )}
+                    {step === 3 && (
+                        <div className="animate-fade-in">
+                            <h2 className="text-2xl font-bold text-center mb-2">Here is your starting blueprint</h2>
+                            <p className="text-brand-text-muted text-center mb-6">Based on your identity as **{selectedIdentity?.name}**. Select the habits you'd like to start with.</p>
+                            {isLoading ? <p>Loading...</p> : (
+                                <div className="space-y-3 mb-6">
+                                    {blueprintHabits.map((habit, index) => (
+                                        <div key={index} onClick={() => toggleHabitSelection(habit)} className={`p-4 rounded-lg cursor-pointer border-2 ${selectedHabits.some(h => h.title === habit.title) ? 'border-brand-primary bg-brand-primary/10' : 'border-brand-secondary bg-brand-surface'}`}>
+                                            <p className="font-bold">{habit.title}</p>
+                                            <p className="text-sm text-brand-text-muted">{habit.description}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                             <div>
+                                <label className="block text-sm font-medium text-brand-text-muted mb-2">What should we call you?</label>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="Your Name"
+                                    className="w-full bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
+                                    required
+                                />
+                            </div>
+                            <button onClick={handleComplete} disabled={!name.trim() || selectedHabits.length === 0} className="w-full mt-6 bg-brand-primary text-white font-bold py-3 px-6 rounded-full text-base hover:bg-opacity-80 transition-colors duration-300 flex items-center justify-center gap-2 disabled:bg-brand-secondary">
+                                Finish Setup <Icon name="arrow-right" className="w-5 h-5"/>
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
-        </div>
+            {showPrivacy && <PrivacyPolicyModal onClose={() => setShowPrivacy(false)} />}
+            {showTerms && <TermsOfServiceModal onClose={() => setShowTerms(false)} />}
+        </>
     );
 };
 

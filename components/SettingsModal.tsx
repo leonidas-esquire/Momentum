@@ -9,13 +9,14 @@ interface SettingsModalProps {
   user: User;
   onClose: () => void;
   onUpdateUser: (user: User) => void;
+  onLogout: () => void;
   onDeleteAccount: () => void;
   onShowPrivacyPolicy: () => void;
   onShowTermsOfService: () => void;
   onShowPlaybook: () => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ user, onClose, onUpdateUser, onDeleteAccount, onShowPrivacyPolicy, onShowTermsOfService, onShowPlaybook }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ user, onClose, onUpdateUser, onLogout, onDeleteAccount, onShowPrivacyPolicy, onShowTermsOfService, onShowPlaybook }) => {
   const { language, setLanguage, t } = useContext(LanguageContext)!;
   const { theme, setTheme } = useContext(ThemeContext)!;
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -106,6 +107,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ user, onClose, onU
           </div>
 
           <div className="border-t border-brand-danger/20 pt-6">
+             <button 
+                onClick={onLogout}
+                className="w-full bg-brand-bg border-2 border-brand-secondary text-brand-text-muted font-bold py-3 px-4 rounded-full hover:border-brand-primary hover:text-brand-primary transition-colors mb-6"
+            >
+                Logout
+            </button>
             <h3 className="text-lg font-semibold text-brand-danger mb-2">{t('settings.deleteAccount')}</h3>
             <p className="text-sm text-brand-text-muted mb-4">{t('settings.deleteWarning')}</p>
             {showDeleteConfirm ? (
