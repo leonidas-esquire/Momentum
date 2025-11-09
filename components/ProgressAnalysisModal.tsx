@@ -109,175 +109,182 @@ export const ProgressAnalysisModal: React.FC<ProgressAnalysisModalProps> = ({ us
 
     // --- PDF Styling Constants ---
     const BRAND_COLOR = '#8A42D6';
-    const TEXT_COLOR = '#111827'; // Black for white bg
-    const MUTED_COLOR = '#6B7280'; // Gray text
+    const TEXT_COLOR = '#111827';
+    const MUTED_COLOR = '#6B7280';
     const PAGE_MARGIN_X = 20;
     const PAGE_MARGIN_Y = 25;
-    const MAX_WIDTH = pdfWidth - PAGE_MARGIN_X * 2;
-    const LINE_HEIGHT_MULTIPLIER = 1.4;
     const HEADER_Y = 15;
-    const FOOTER_Y = 15;
-
+    const MAX_WIDTH = pdfWidth - PAGE_MARGIN_X * 2;
+    
     // --- Cover Page ---
     pdf.setFillColor(BRAND_COLOR);
     pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
-    
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(40);
     pdf.setTextColor('#FFFFFF');
     pdf.text("Momentum", pdfWidth / 2, 80, { align: 'center' });
-    
     pdf.setFontSize(20);
     pdf.setTextColor('#E4E4E6');
     pdf.text("AI-Powered Progress Report", pdfWidth / 2, 100, { align: 'center' });
-    
     pdf.setDrawColor('#FFFFFF');
     pdf.setLineWidth(0.5);
     pdf.line(PAGE_MARGIN_X, 130, pdfWidth - PAGE_MARGIN_X, 130);
-    
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(14);
     pdf.setTextColor('#A0A0B0');
     pdf.text("Prepared for:", PAGE_MARGIN_X, 150);
-    
     pdf.setFontSize(18);
     pdf.setTextColor('#FFFFFF');
     pdf.text(user.name, PAGE_MARGIN_X, 160);
-    
     pdf.setFontSize(12);
     pdf.setTextColor('#A0A0B0');
     pdf.text(`Report Generated: ${new Date().toLocaleDateString()}`, PAGE_MARGIN_X, pdfHeight - 30);
     
     // --- Report Content ---
     pdf.addPage();
+    pdf.setTextColor(TEXT_COLOR);
     let y = PAGE_MARGIN_Y;
-
-    const addHeaderAndFooter = (pageNum: number) => {
-        pdf.setFontSize(9);
-        pdf.setTextColor(MUTED_COLOR);
-        pdf.text("Momentum: The Irresistible Habit App", PAGE_MARGIN_X, HEADER_Y);
-        pdf.text("Your Momentum App - Progress Report", PAGE_MARGIN_X, pdfHeight - FOOTER_Y);
-        // Page number will be finalized later
-    };
-    addHeaderAndFooter(2);
 
     const checkPageBreak = (neededHeight: number) => {
         if (y + neededHeight > pdfHeight - PAGE_MARGIN_Y) {
             pdf.addPage();
             y = PAGE_MARGIN_Y;
-            addHeaderAndFooter(pdf.internal.getNumberOfPages());
         }
     };
+    
+    type StyledSegment = { text: string; isBold: boolean };
 
-    const lines = report ? report.split('\n') : [];
-    for (const line of lines) {
-        if (line.trim() === '') {
-            y += 5; // Paragraph break
-            checkPageBreak(0);
-            continue;
-        }
-
+    const renderBlock = (block: string) => {
         let fontSize = 11;
-        let fontStyle = 'normal';
         let color = TEXT_COLOR;
-        let text = line;
+        let text = block.trim();
         let isList = false;
         let leftMargin = PAGE_MARGIN_X;
-        let spaceBefore = 2;
-        
-        // Simple Markdown parsing
-        if (line.match(/^# /)) {
-            fontSize = 22; fontStyle = 'bold'; text = line.substring(2); spaceBefore = 10;
-        } else if (line.match(/^## /)) {
-            fontSize = 16; fontStyle = 'bold'; text = line.substring(3); spaceBefore = 8;
-        } else if (line.match(/^### /) || line.match(/^\d\.\s/)) {
-            fontSize = 12; fontStyle = 'bold'; color = BRAND_COLOR;
-            text = line.startsWith('###') ? line.substring(4) : line.substring(line.indexOf(' ') + 1);
-            spaceBefore = 6;
-        } else if (line.startsWith('* ') || line.startsWith('- ')) {
-            text = line.substring(2); isList = true; leftMargin += 5; spaceBefore = 1;
+        let spaceBefore = 4;
+        let spaceAfter = 2;
+        let hasLine = false;
+
+        if (block.match(/^# /)) {
+            fontSize = 20; text = block.substring(2); spaceBefore = 8; spaceAfter = 4; hasLine = true;
+        } else if (block.match(/^## /)) {
+            fontSize = 16; text = block.substring(3); spaceBefore = 8; spaceAfter = 3;
+        } else if (block.match(/^### /) || block.match(/^\d\.\s/)) {
+            fontSize = 12; color = BRAND_COLOR;
+            text = block.startsWith('###') ? block.substring(4) : block.substring(block.indexOf(' ') + 1);
+            spaceBefore = 6; spaceAfter = 2;
+        } else if (block.startsWith('* ') || block.startsWith('- ')) {
+            text = block.substring(2); isList = true; leftMargin += 5; spaceBefore = 1; spaceAfter = 1; fontSize = 10;
         }
 
         y += spaceBefore;
-        checkPageBreak(0);
+        checkPageBreak(fontSize * 0.35);
 
         pdf.setFontSize(fontSize);
-        pdf.setFont('helvetica', fontStyle);
         pdf.setTextColor(color);
-        
-        // Handle inline bolding by splitting and measuring
-        const processAndWrapText = (rawText: string, maxWidth: number) => {
-            const parts = rawText.split(/(\*\*.*?\*\*)/g).filter(p => p);
-            const words: {text: string, isBold: boolean}[] = [];
-            parts.forEach(part => {
-                const isBold = part.startsWith('**');
-                part.replace(/\*\*/g, '').split(' ').forEach(word => {
-                    if(word) words.push({ text: word, isBold });
+
+        const buildLinesManually = (rawText: string, maxWidth: number): StyledSegment[][] => {
+            const words: StyledSegment[] = [];
+            const segments = rawText.split(/(\*\*.*?\*\*)/g).filter(Boolean);
+            segments.forEach(seg => {
+                const isBold = seg.startsWith('**') && seg.endsWith('**');
+                const segText = isBold ? seg.slice(2, -2) : seg;
+                segText.split(' ').forEach(word => {
+                    if (word) words.push({ text: word, isBold });
                 });
             });
 
-            const lines: { words: {text: string, isBold: boolean}[] }[] = [];
-            let currentLine: { words: {text: string, isBold: boolean}[] } = { words: [] };
-            
+            const finalLines: StyledSegment[][] = [];
+            if (words.length === 0) return finalLines;
+
+            let lineInProgress: StyledSegment[] = [];
+            let currentLineWidth = 0;
+            const spaceWidth = pdf.getStringUnitWidth(' ') * fontSize / pdf.internal.scaleFactor;
+
             words.forEach(word => {
-                const currentLineText = [...currentLine.words, word].map(w => w.text).join(' ');
-                const width = pdf.getStringUnitWidth(currentLineText) * fontSize / pdf.internal.scaleFactor;
-                if(width > maxWidth) {
-                    lines.push(currentLine);
-                    currentLine = { words: [word] };
+                pdf.setFont('helvetica', word.isBold ? 'bold' : 'normal');
+                const wordWidth = pdf.getStringUnitWidth(word.text) * fontSize / pdf.internal.scaleFactor;
+
+                if (currentLineWidth + (lineInProgress.length > 0 ? spaceWidth : 0) + wordWidth > maxWidth) {
+                    finalLines.push(lineInProgress);
+                    lineInProgress = [word];
+                    currentLineWidth = wordWidth;
                 } else {
-                    currentLine.words.push(word);
+                    if (lineInProgress.length > 0) currentLineWidth += spaceWidth;
+                    lineInProgress.push(word);
+                    currentLineWidth += wordWidth;
                 }
             });
-            lines.push(currentLine);
-            return lines;
-        }
+            if (lineInProgress.length > 0) finalLines.push(lineInProgress);
+            return finalLines;
+        };
 
-        const wrappedLines = processAndWrapText(text, MAX_WIDTH - (isList ? 5 : 0));
-        const neededHeight = wrappedLines.length * fontSize * 0.352777 * LINE_HEIGHT_MULTIPLIER;
-        checkPageBreak(neededHeight);
+        const maxWidth = MAX_WIDTH - (isList ? 5 : 0);
+        const finalLines = buildLinesManually(text, maxWidth);
 
-        if (isList) {
-            pdf.setFillColor(TEXT_COLOR);
-            pdf.circle(PAGE_MARGIN_X + 2, y, 0.8, 'F');
-        }
-
-        wrappedLines.forEach((lineData) => {
-            const lineText = lineData.words.map(w => w.text).join(' ');
+        finalLines.forEach((lineSegments, lineIndex) => {
+            const lineHeight = (pdf.getLineHeight(text) / pdf.internal.scaleFactor) * 0.9;
+            checkPageBreak(lineHeight);
             
-            // Render the full line as normal text first. This ensures proper left-alignment.
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(color);
-            pdf.text(lineText, leftMargin, y);
-            
-            // Then, overlay the bold parts at the correct positions
             let currentX = leftMargin;
-            lineData.words.forEach(word => {
-                const wordWithSpace = word.text + ' ';
-                // Always measure with the normal font to get accurate positioning
-                pdf.setFont('helvetica', 'normal');
-                const wordWidth = pdf.getStringUnitWidth(wordWithSpace) * fontSize / pdf.internal.scaleFactor;
-                
-                if (word.isBold) {
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.setTextColor(color); 
-                    pdf.text(word.text, currentX, y); // Render just the word, no space
+            if (isList && lineIndex === 0) {
+                pdf.setFillColor(TEXT_COLOR);
+                pdf.circle(PAGE_MARGIN_X + 2.5, y - (lineHeight / 2) + 2, 0.8, 'F');
+            }
+
+            lineSegments.forEach((segment, segmentIndex) => {
+                if (segmentIndex > 0) {
+                    currentX += pdf.getStringUnitWidth(' ') * fontSize / pdf.internal.scaleFactor;
                 }
-                currentX += wordWidth;
+                pdf.setFont('helvetica', segment.isBold ? 'bold' : 'normal');
+                pdf.text(segment.text, currentX, y);
+                currentX += pdf.getStringUnitWidth(segment.text) * fontSize / pdf.internal.scaleFactor;
             });
-            
-            y += fontSize * 0.352777 * LINE_HEIGHT_MULTIPLIER;
-            checkPageBreak(0);
+            y += lineHeight;
         });
+
+        if (hasLine) {
+            y += 1;
+            checkPageBreak(2);
+            pdf.setDrawColor(MUTED_COLOR);
+            pdf.setLineWidth(0.2);
+            pdf.line(PAGE_MARGIN_X, y, PAGE_MARGIN_X + MAX_WIDTH, y);
+            y += 2;
+        }
+
+        y += spaceAfter;
+    };
+
+    const rawLines = report ? report.split(/\r?\n/) : [];
+    const blocks: string[] = [];
+    let currentParagraph = '';
+    rawLines.forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed === '') {
+            if (currentParagraph) blocks.push(currentParagraph);
+            currentParagraph = '';
+        } else if (trimmed.match(/^(#|##|###|\d\.|-|\*)/)) {
+            if (currentParagraph) blocks.push(currentParagraph);
+            currentParagraph = '';
+            blocks.push(trimmed);
+        } else {
+            currentParagraph += (currentParagraph ? ' ' : '') + trimmed;
+        }
+    });
+    if (currentParagraph) blocks.push(currentParagraph);
+
+    blocks.forEach(renderBlock);
+
+    const totalPages = pdf.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        if (i > 1) { 
+            pdf.setPage(i);
+            pdf.setFontSize(9);
+            pdf.setTextColor(MUTED_COLOR);
+            pdf.text("Momentum AI Progress Report", PAGE_MARGIN_X, HEADER_Y);
+            pdf.text(`Page ${i} of ${totalPages}`, pdfWidth - PAGE_MARGIN_X, HEADER_Y, { align: 'right' });
+        }
     }
 
-    // Finalize page numbers
-    const totalPages = pdf.internal.getNumberOfPages();
-    for (let i = 2; i <= totalPages; i++) {
-        pdf.setPage(i);
-        pdf.text(`Page ${i} of ${totalPages}`, pdfWidth - PAGE_MARGIN_X, pdfHeight - FOOTER_Y, { align: 'right' });
-    }
-    
     pdf.save(`Momentum_AI_Report_${user.name.replace(/\s/g, '_')}.pdf`);
   };
 

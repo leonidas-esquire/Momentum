@@ -12,9 +12,10 @@ interface SettingsModalProps {
   onDeleteAccount: () => void;
   onShowPrivacyPolicy: () => void;
   onShowTermsOfService: () => void;
+  onShowPlaybook: () => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ user, onClose, onUpdateUser, onDeleteAccount, onShowPrivacyPolicy, onShowTermsOfService }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ user, onClose, onUpdateUser, onDeleteAccount, onShowPrivacyPolicy, onShowTermsOfService, onShowPlaybook }) => {
   const { language, setLanguage, t } = useContext(LanguageContext)!;
   const { theme, setTheme } = useContext(ThemeContext)!;
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -87,8 +88,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ user, onClose, onU
           </div>
 
           <div className="border-t border-brand-secondary pt-6">
-            <h3 className="text-lg font-semibold mb-4">{t('settings.privacy')}</h3>
+            <h3 className="text-lg font-semibold mb-4">Help &amp; Resources</h3>
             <div className="space-y-2">
+               <button onClick={onShowPlaybook} className="w-full text-left bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text hover:border-brand-primary/50 flex justify-between items-center">
+                <span>View App Playbook</span>
+                <Icon name="book-open" className="w-5 h-5" />
+              </button>
               <button onClick={onShowPrivacyPolicy} className="w-full text-left bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text hover:border-brand-primary/50 flex justify-between items-center">
                 <span>{t('settings.viewPolicy')}</span>
                 <Icon name="arrow-right" className="w-5 h-5" />

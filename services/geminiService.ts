@@ -110,42 +110,43 @@ export const generateProgressAnalysisReport = async (
     language: string
 ): Promise<string> => {
     const identityName = user.selectedIdentities[0]?.name || 'Achiever';
-    const habitData = habits.map(h => `
-        - Habit: "${h.title}" (Streak: ${h.streak} days, Longest: ${h.longestStreak}, Completions: ${h.completions.length})
-    `).join('');
+    const habitData = habits.map(h => `        - Habit: "${h.title}" (Streak: ${h.streak} days, Longest: ${h.longestStreak}, Completions: ${h.completions.length})`).join('\n');
 
     const prompt = `
         You are Momentum AI, an expert performance and habit formation coach. Your tone is incredibly positive, motivational, and insightful.
-        You are generating a personalized progress report for **${user.name}**, who has chosen the identity of **The ${identityName}**.
+        You are generating a personalized progress report for **${user.name}**, who has chosen the identity of **${identityName}**.
+        
+        The final output MUST be clean, well-formatted Markdown with perfect grammar and spacing. Ensure every word is separated by a single space.
         
         Here is their habit data:
-        ${habitData}
+${habitData}
 
-        Please generate a comprehensive, branded report with the following structure and tone:
+        Please generate a comprehensive report using the following structure. Use numbered headings for each section.
+
+        **Momentum AI: Your Progress Report, ${user.name}**
         
-        **Report Title:** Start with the title: "Momentum AI: Your Progress Report, ${user.name}"
+        **Hello ${user.name}, ${identityName}!**
         
-        **Greeting:** Follow with a personal greeting like "Hello ${user.name}, The ${identityName}!"
+        Follow with a short, powerful introductory paragraph (2-3 sentences) celebrating their fantastic start, dedication, and consistency. Mention that you're impressed and ready to dive into the progress they're building.
         
-        **Introduction:** Write a short, powerful introductory paragraph (2-3 sentences) celebrating their fantastic start, dedication, and consistency. Mention that you're impressed and ready to dive into the progress they're building.
-        
-        Then, create the following numbered sections using Markdown for headings (e.g., "1. Overall Summary"). Use double asterisks for bolding key phrases (e.g., **powerful declaration**).
-        
-        **IMPORTANT FORMATTING RULE: All paragraphs must be left-aligned. Do NOT use full justification (aligning text to both left and right margins).**
+        ---
         
         **1. Overall Summary:**
-        Provide an exceptional analysis of their performance. If they have perfect completion, praise it as more than just a good start, but a "powerful declaration of your commitment to being The ${identityName}." Mention their incredible rhythm, focus, and the unstoppable momentum they are building. End with an encouraging sentence like "Keep this energy soaring!"
+        Provide an exceptional analysis of their performance. If they have perfect completion, praise it as more than just a good start, but a "**powerful declaration** of your unwavering commitment to being ${identityName}." Mention their incredible rhythm, razor-sharp focus, and the **unstoppable momentum** they are building. End with an encouraging sentence like "Keep this energy soaring!"
         
         **2. Identity Alignment:**
-        Analyze how their chosen habits perfectly support their identity as "The ${identityName}". If the alignment is strong, state it as a significant strength. Highlight one or two specific habits and explain *why* they are quintessential to their identity.
+        Analyze how their chosen habits are in **perfect harmonious alignment** with their identity as ${identityName}. If the alignment is strong, state it as a significant strength. Highlight one or two specific habits and explain *why* they are quintessential to their identity (e.g., "Your 'Daily Momentum Map' habit is quintessential for an Achiever...").
         
         **3. Strengths & Momentum Drivers:**
-        Identify their strongest habits (long streaks, perfect consistency). Pinpoint these as the "drivers" of their momentum. Celebrate these consistent actions as the foundation of their success.
+        Identify their strongest habits (long streaks, perfect consistency). Pinpoint these as the **foundational bedrock** and key **momentum drivers**. Celebrate these consistent actions as the foundation of their success.
         
         **4. Actionable Recommendations for Next Week:**
-        Provide 2-3 specific, positive, and forward-looking suggestions. Frame them as ways to "amplify momentum" or "level-up". Suggestions could include focusing on a new micro-habit, increasing the duration of a current habit slightly, or thinking about the next small step.
+        Provide 2-3 specific, positive, and forward-looking suggestions. Frame them as ways to "amplify this incredible momentum" or "level-up". Suggestions could include deepening reflection, visualizing wins, or making micro-increment increases to focus.
         
-        Keep the entire report encouraging, data-driven, and supportive.
+        ---
+        
+        End with a final encouraging sign-off, like "Keep shining, ${user.name}!".
+        
         Respond in the language with this code: ${language}.
     `;
 

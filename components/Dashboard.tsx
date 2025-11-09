@@ -18,6 +18,7 @@ import { DailyDebriefModal } from './DailyDebriefModal';
 import { ProgressAnalysisModal } from './ProgressAnalysisModal';
 import { getTodayDateString, isToday, isYesterday } from '../utils/date';
 import { MOCK_SQUADS, MOCK_TEAMS, MOCK_FINANCIALS, MOCK_QUESTS, MOCK_SAGA, MOCK_CHAT, MOCK_CHALLENGES, MOCK_ASSIST_REQUESTS } from '../App';
+import { PlaybookModal } from './PlaybookModal';
 
 interface DashboardProps {
   user: User;
@@ -50,6 +51,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showWeeklyReview, setShowWeeklyReview] = useState(false);
   const [showDailyDebrief, setShowDailyDebrief] = useState(false);
   const [showProgressAnalysis, setShowProgressAnalysis] = useState(false);
+  const [showPlaybook, setShowPlaybook] = useState(false);
   const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null);
   const [habitToEdit, setHabitToEdit] = useState<Habit | null>(null);
   const [assistRequest, setAssistRequest] = useState<AssistRequest | null>(MOCK_ASSIST_REQUESTS.length > 0 ? MOCK_ASSIST_REQUESTS[0] : null);
@@ -294,10 +296,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             setHabitToEdit(null);
         }} 
       />}
-      {showSettings && <SettingsModal user={user} onClose={() => setShowSettings(false)} onUpdateUser={onUpdateUser} onDeleteAccount={onSignOut} onShowPrivacyPolicy={onShowPrivacyPolicy} onShowTermsOfService={onShowTermsOfService} />}
+      {showSettings && <SettingsModal user={user} onClose={() => setShowSettings(false)} onUpdateUser={onUpdateUser} onDeleteAccount={onSignOut} onShowPrivacyPolicy={onShowPrivacyPolicy} onShowTermsOfService={onShowTermsOfService} onShowPlaybook={() => setShowPlaybook(true)} />}
       {showWeeklyReview && <WeeklyReview habits={habits} onClose={() => setShowWeeklyReview(false)} />}
       {showDailyDebrief && <DailyDebriefModal user={user} habits={habits} onClose={() => setShowDailyDebrief(false)} onSave={handleSaveDebrief} />}
       {showProgressAnalysis && <ProgressAnalysisModal user={user} habits={habits} onClose={() => setShowProgressAnalysis(false)} />}
+      {showPlaybook && <PlaybookModal onClose={() => setShowPlaybook(false)} />}
       {habitToDelete && <DeleteConfirmation habitTitle={habitToDelete.title} onConfirm={() => { onDeleteHabit(habitToDelete.id); setHabitToDelete(null); }} onCancel={() => setHabitToDelete(null)} />}
       {assistRequest && <OfferAssistModal 
         requesterName={assistRequest.requesterName} 
