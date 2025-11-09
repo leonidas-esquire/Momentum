@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Habit, User, Reminder } from '../types';
 import { Icon } from './Icon';
 import { LanguageContext } from '../contexts/LanguageContext';
@@ -9,6 +9,134 @@ interface HabitBuilderProps {
   onSaveHabit: (habitData: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields' | 'missedDays'> | Habit) => void;
   onClose: () => void;
 }
+
+const CustomTimePicker: React.FC<{ value: string; onChange: (newTime: string) => void }> = ({ value, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const [hour24, minute] = value.split(':').map(Number);
+  const period = hour24 >= 12 ? 'PM' : 'AM';
+  let hour12 = hour24 % 12;
+  if (hour12 === 0) hour12 = 12;
+
+  const handleHourChange = (selectedHour12: number) => {
+    let newHour24;
+    if (period === 'PM') {
+      newHour24 = selectedHour12 === 12 ? 12 : selectedHour12 + 12;
+    } else { // AM
+      newHour24 = selectedHour12 === 12 ? 0 : selectedHour12;
+    }
+    onChange(`${String(newHour24).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+  };
+
+  const handleMinuteChange = (selectedMinute: number) => {
+    onChange(`${String(hour24).padStart(2, '0')}:${String(selectedMinute).padStart(2, '0')}`);
+  };
+
+  const handlePeriodChange = (selectedPeriod: 'AM' | 'PM') => {
+    let newHour24 = hour24;
+    if (selectedPeriod === 'PM' && hour24 < 12) {
+      newHour24 += 12;
+    } else if (selectedPeriod === 'AM' && hour24 >= 12) {
+      newHour24 -= 12;
+    }
+    onChange(`${String(newHour24).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+  };
+
+  const hours = Array.from({ length: 12 }, (_, i) => i + 1);
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
+  const periods = ['AM', 'PM'];
+
+  const hourRef = useRef<HTMLDivElement>(null);
+  const minuteRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (hourRef.current) {
+        const container = hourRef.current;
+        const selectedEl = container.querySelector<HTMLButtonElement>('[data-selected="true"]');
+        if (selectedEl) {
+          container.scrollTop = selectedEl.offsetTop - (container.clientHeight / 2) + (selectedEl.clientHeight / 2);
+        }
+      }
+      if (minuteRef.current) {
+        const container = minuteRef.current;
+        const selectedEl = container.querySelector<HTMLButtonElement>('[data-selected="true"]');
+        if (selectedEl) {
+          container.scrollTop = selectedEl.offsetTop - (container.clientHeight / 2) + (selectedEl.clientHeight / 2);
+        }
+      }
+    }
+  }, [isOpen]);
+
+  return (
+    <div className="relative" ref={pickerRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none flex justify-between items-center"
+      >
+        <span>{`${String(hour12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${period}`}</span>
+        <Icon name="clock" className="w-5 h-5 text-brand-text-muted" />
+      </button>
+      {isOpen && (
+        <div className="absolute z-10 mt-1 w-full bg-brand-bg border border-brand-secondary rounded-lg shadow-lg p-2 animate-fade-in">
+          <div className="flex h-48">
+            <div ref={hourRef} className="flex-1 overflow-y-auto px-1 scrollbar-thin">
+              {hours.map(h => (
+                <button
+                  key={h}
+                  type="button"
+                  data-selected={h === hour12}
+                  onClick={() => handleHourChange(h)}
+                  className={`w-full text-center py-2 rounded-md transition-colors ${h === hour12 ? 'bg-brand-primary text-white' : 'hover:bg-brand-surface'}`}
+                >
+                  {String(h).padStart(2, '0')}
+                </button>
+              ))}
+            </div>
+            <div ref={minuteRef} className="flex-1 overflow-y-auto px-1 scrollbar-thin">
+              {minutes.map(m => (
+                <button
+                  key={m}
+                  type="button"
+                  data-selected={m === minute}
+                  onClick={() => handleMinuteChange(m)}
+                  className={`w-full text-center py-2 rounded-md transition-colors ${m === minute ? 'bg-brand-primary text-white' : 'hover:bg-brand-surface'}`}
+                >
+                  {String(m).padStart(2, '0')}
+                </button>
+              ))}
+            </div>
+            <div className="flex-none w-1/3 px-1 flex flex-col">
+              {periods.map(p => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => handlePeriodChange(p as 'AM' | 'PM')}
+                  className={`w-full text-center py-2 rounded-md transition-colors ${p === period ? 'bg-brand-primary text-white' : 'hover:bg-brand-surface'}`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 export const HabitBuilder: React.FC<HabitBuilderProps> = ({ user, habitToEdit, onSaveHabit, onClose }) => {
   const [title, setTitle] = useState('');
@@ -114,13 +242,10 @@ export const HabitBuilder: React.FC<HabitBuilderProps> = ({ user, habitToEdit, o
                     <button type="button" onClick={() => setReminder({ type: 'location', location: 'home', locationLabel: 'When I arrive home' })} className={`w-full py-2 rounded-md font-semibold transition-colors ${reminder?.type === 'location' ? 'bg-brand-surface text-brand-text shadow' : 'text-brand-text-muted hover:bg-brand-surface/50'}`}>Location</button>
                 </div>
                 {reminder?.type === 'time' && (
-                    <div className="mt-2">
-                        <input
-                            type="time"
-                            value={reminder.time}
-                            onChange={(e) => setReminder({ ...reminder, time: e.target.value })}
-                            className="w-full bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
-                            required
+                    <div className="mt-4">
+                        <CustomTimePicker
+                            value={reminder.time || '09:00'}
+                            onChange={(newTime) => setReminder({ ...(reminder || { type: 'time' }), time: newTime })}
                         />
                     </div>
                 )}

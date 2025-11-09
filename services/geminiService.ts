@@ -1,9 +1,40 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, GenerateContentResponse, Type } from '@google/genai';
 import { BlueprintHabit, Habit, RallyPointData, User } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const model = 'gemini-2.5-flash';
+
+/**
+ * A wrapper for the Gemini API's generateContent method that includes
+ * automatic retries with exponential backoff for rate limit errors (429).
+ * @param params The parameters for the generateContent call.
+ * @param retries The number of retries remaining.
+ * @param delay The delay in ms before the next retry.
+ * @returns The response from the API.
+ */
+const generateContentWithRetry = async (
+    params: any,
+    retries = 3,
+    delay = 1000
+): Promise<GenerateContentResponse> => {
+    try {
+        const response = await ai.models.generateContent(params);
+        return response;
+    } catch (error: any) {
+        const isRateLimitError = error.toString().includes('429') || error.toString().includes('RESOURCE_EXHAUSTED');
+
+        if (retries > 0 && isRateLimitError) {
+            console.warn(`Rate limit exceeded. Retrying in ${delay / 1000}s... (${retries} retries left)`);
+            await new Promise(res => setTimeout(res, delay));
+            return generateContentWithRetry(params, retries - 1, delay * 2); // Exponential backoff
+        }
+        
+        // Log the final error after all retries have failed
+        console.error('An unrecoverable error occurred during Gemini API call:', error);
+        throw error; // Re-throw other errors or if retries are exhausted
+    }
+};
 
 export const generateHabitBlueprint = async (identityName: string, language: string): Promise<BlueprintHabit[]> => {
   const prompt = `
@@ -15,7 +46,7 @@ export const generateHabitBlueprint = async (identityName: string, language: str
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry({
       model,
       contents: prompt,
       config: {
@@ -78,7 +109,7 @@ export const generateWeeklyInsight = async (
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry({
         model,
         contents: prompt,
         config: {
@@ -151,7 +182,7 @@ ${habitData}
     `;
 
     try {
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithRetry({
             model,
             contents: prompt
         });
@@ -181,7 +212,7 @@ export const generateDebriefQuestionsAndWin = async (
     `;
 
     try {
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithRetry({
             model,
             contents: prompt,
             config: {
@@ -227,7 +258,7 @@ export const generateAssistMessages = async (
     `;
 
     try {
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithRetry({
             model,
             contents: prompt,
             config: {
@@ -266,7 +297,7 @@ export const generateRallyPoint = async (habit: Habit, language: string): Promis
     `;
 
     try {
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithRetry({
             model,
             contents: prompt,
             config: {
