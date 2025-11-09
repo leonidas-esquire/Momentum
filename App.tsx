@@ -10,6 +10,7 @@ import { Chatbot } from './components/Chatbot';
 import { RallyPointModal } from './components/RallyPointModal';
 import { isToday, isYesterday } from './utils/date';
 import { ThemeContext } from './contexts/ThemeContext';
+import { requestNotificationPermission, scheduleAllHabitNotifications } from './utils/notifications';
 
 
 // MOCK DATA - In a real application, this would come from a backend API
@@ -73,6 +74,11 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Request notification permission on app load
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
+
   // Sync theme when user object changes
   useEffect(() => {
     if (user?.theme) {
@@ -91,6 +97,8 @@ const App: React.FC = () => {
     if (habits.length > 0 || user) { // Also save empty habits array if user exists
       localStorage.setItem('momentum_habits', JSON.stringify(habits));
     }
+    // Re-schedule notifications whenever habits change
+    scheduleAllHabitNotifications(habits);
   }, [habits, user]);
   
   const handleOnboardingComplete = (newUser: User, newHabits: Omit<Habit, 'id' | 'streak' | 'longestStreak' | 'lastCompleted' | 'completions' | 'momentumShields'>[]) => {

@@ -59,6 +59,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const todayStr = getTodayDateString();
   const hasDebriefedToday = user.dailyDebriefs.some(d => d.date === todayStr);
 
+  const locationHabits = useMemo(() => {
+    return habits.filter(h => h.reminder?.type === 'location' && !isToday(h.lastCompleted));
+  }, [habits]);
+
+  const handleContextualTrigger = (location: 'home' | 'work') => {
+      const habitsToNotify = locationHabits.filter(h => h.reminder?.location === location);
+      if (habitsToNotify.length > 0) {
+          const habitTitles = habitsToNotify.map(h => `"${h.title}"`).join(', ');
+          new Notification('Momentum Contextual Reminder', {
+              body: `Welcome ${location}! Time for your habits: ${habitTitles}`,
+              icon: '/vite.svg',
+          });
+      }
+  };
+
+
   const handleSaveDebrief = (debrief: DailyDebrief, sharedWin: string | null) => {
     const updatedUser = {
       ...user,
@@ -234,6 +250,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <main className="container mx-auto p-4 md:p-6 space-y-8">
         <h2 className="text-3xl font-bold">{t('dashboard.welcome', { name: user.name })}</h2>
         
+        <div className="flex flex-col sm:flex-row gap-2">
+            {locationHabits.some(h => h.reminder?.location === 'home') && (
+                <button onClick={() => handleContextualTrigger('home')} className="flex-1 bg-brand-surface border-2 border-dashed border-brand-secondary rounded-lg p-3 text-brand-text-muted hover:border-brand-primary hover:text-brand-primary transition-colors flex items-center justify-center gap-2">
+                    <Icon name="map-pin" className="w-5 h-5" /> I've Arrived Home
+                </button>
+            )}
+            {locationHabits.some(h => h.reminder?.location === 'work') && (
+                <button onClick={() => handleContextualTrigger('work')} className="flex-1 bg-brand-surface border-2 border-dashed border-brand-secondary rounded-lg p-3 text-brand-text-muted hover:border-brand-primary hover:text-brand-primary transition-colors flex items-center justify-center gap-2">
+                    <Icon name="map-pin" className="w-5 h-5" /> I've Arrived at Work
+                </button>
+            )}
+        </div>
+
         {user.subscription.plan === 'team' && <FinancialsWidget financials={MOCK_FINANCIALS} allUsers={[]} teams={MOCK_TEAMS} />}
 
         <IdentityStatus identities={user.selectedIdentities} />

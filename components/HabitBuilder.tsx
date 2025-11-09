@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Habit, User } from '../types';
+import { Habit, User, Reminder } from '../types';
 import { Icon } from './Icon';
 import { LanguageContext } from '../contexts/LanguageContext';
 
@@ -15,6 +15,7 @@ export const HabitBuilder: React.FC<HabitBuilderProps> = ({ user, habitToEdit, o
   const [description, setDescription] = useState('');
   const [identityTag, setIdentityTag] = useState(user.selectedIdentities[0]?.name || '');
   const [cue, setCue] = useState('In the morning');
+  const [reminder, setReminder] = useState<Reminder | undefined>(habitToEdit?.reminder);
   const { t } = useContext(LanguageContext)!;
 
   useEffect(() => {
@@ -23,27 +24,28 @@ export const HabitBuilder: React.FC<HabitBuilderProps> = ({ user, habitToEdit, o
       setDescription(habitToEdit.description || '');
       setIdentityTag(habitToEdit.identityTag);
       setCue(habitToEdit.cue);
+      setReminder(habitToEdit.reminder);
     }
   }, [habitToEdit]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim() && identityTag.trim() && cue.trim()) {
+      const habitBase = {
+        title,
+        description: description.trim() ? description.trim() : undefined,
+        identityTag,
+        cue,
+        reminder,
+      };
+
       if (habitToEdit) {
         onSaveHabit({
           ...habitToEdit,
-          title,
-          description: description.trim() ? description.trim() : undefined,
-          identityTag,
-          cue,
+          ...habitBase,
         });
       } else {
-        onSaveHabit({
-          title,
-          description: description.trim() ? description.trim() : undefined,
-          identityTag,
-          cue,
-        });
+        onSaveHabit(habitBase);
       }
       onClose();
     }
@@ -102,6 +104,39 @@ export const HabitBuilder: React.FC<HabitBuilderProps> = ({ user, habitToEdit, o
                     <option value="During my lunch break">{t('habitBuilder.cueLunch')}</option>
                     <option value="Before bed">{t('habitBuilder.cueBed')}</option>
                 </select>
+            </div>
+            
+            <div>
+                <label className="block text-sm font-medium text-brand-text-muted mb-2">Set a Reminder</label>
+                <div className="flex bg-brand-bg border border-brand-secondary rounded-lg p-1 space-x-1">
+                    <button type="button" onClick={() => setReminder(undefined)} className={`w-full py-2 rounded-md font-semibold transition-colors ${!reminder ? 'bg-brand-surface text-brand-text shadow' : 'text-brand-text-muted hover:bg-brand-surface/50'}`}>None</button>
+                    <button type="button" onClick={() => setReminder({ type: 'time', time: '09:00' })} className={`w-full py-2 rounded-md font-semibold transition-colors ${reminder?.type === 'time' ? 'bg-brand-surface text-brand-text shadow' : 'text-brand-text-muted hover:bg-brand-surface/50'}`}>Time</button>
+                    <button type="button" onClick={() => setReminder({ type: 'location', location: 'home', locationLabel: 'When I arrive home' })} className={`w-full py-2 rounded-md font-semibold transition-colors ${reminder?.type === 'location' ? 'bg-brand-surface text-brand-text shadow' : 'text-brand-text-muted hover:bg-brand-surface/50'}`}>Location</button>
+                </div>
+                {reminder?.type === 'time' && (
+                    <div className="mt-2">
+                        <input
+                            type="time"
+                            value={reminder.time}
+                            onChange={(e) => setReminder({ ...reminder, time: e.target.value })}
+                            className="w-full bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:outline-none"
+                            required
+                        />
+                    </div>
+                )}
+                {reminder?.type === 'location' && (
+                    <div className="mt-2">
+                        <select
+                            value={reminder.location}
+                            onChange={(e) => setReminder({ ...(reminder || { type: 'location' }), location: e.target.value as 'home' | 'work', locationLabel: e.target.options[e.target.selectedIndex].text })}
+                            className="w-full bg-brand-bg border border-brand-secondary rounded-lg p-3 text-brand-text focus:ring-2 focus:ring-brand-primary focus:outline-none"
+                            required
+                        >
+                            <option value="home">When I arrive home</option>
+                            <option value="work">When I arrive at work</option>
+                        </select>
+                    </div>
+                )}
             </div>
             
             <div className="flex justify-end pt-4">

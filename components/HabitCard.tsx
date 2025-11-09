@@ -49,12 +49,24 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onUndo,
     onStartVoiceNote(habit.id);
   }
 
+  const formatTime = (time: string) => {
+    try {
+        const [hour, minute] = time.split(':');
+        const date = new Date();
+        date.setHours(parseInt(hour, 10));
+        date.setMinutes(parseInt(minute, 10));
+        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    } catch (e) {
+        return time; // Fallback
+    }
+  };
+
   return (
     <div className={`bg-brand-surface rounded-lg p-4 flex items-center gap-4 transition-all duration-300 ${isCompleted ? 'bg-brand-surface/70 opacity-80' : ''} ${habit.isFavorite ? 'ring-2 ring-yellow-400/80' : 'border-2 border-transparent'}`}>
       <div className="flex-grow">
         <p className="font-bold text-lg text-brand-text">{habit.title}</p>
         {habit.description && <p className="text-sm text-brand-text-muted max-w-prose">{habit.description}</p>}
-        <div className="flex items-center gap-4 mt-2 text-sm text-brand-text-muted">
+        <div className="flex items-center gap-4 mt-2 text-sm text-brand-text-muted flex-wrap">
           <div className="flex items-center gap-1">
             <Icon name="fire" className={`w-4 h-4 ${habit.streak > 0 ? 'text-brand-warning' : ''}`} />
             <span>{habit.streak} Day Streak</span>
@@ -63,6 +75,21 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onUndo,
             <Icon name="shield" className={`w-4 h-4 ${habit.momentumShields > 0 ? 'text-brand-safe' : ''}`} />
             <span>{habit.momentumShields} Shields</span>
           </div>
+          {habit.reminder && (
+            <div className="flex items-center gap-1 font-semibold">
+              {habit.reminder.type === 'time' && habit.reminder.time ? (
+                <>
+                  <Icon name="clock" className="w-4 h-4 text-brand-primary" />
+                  <span>{formatTime(habit.reminder.time)}</span>
+                </>
+              ) : habit.reminder.type === 'location' && habit.reminder.locationLabel ? (
+                <>
+                  <Icon name="map-pin" className="w-4 h-4 text-brand-primary" />
+                  <span>{habit.reminder.locationLabel}</span>
+                </>
+              ) : null}
+            </div>
+          )}
           {habit.missedDays > 0 && !isCompleted && (
             <div className="flex items-center gap-1 text-brand-danger">
               <Icon name="trending-down" className="w-4 h-4" />

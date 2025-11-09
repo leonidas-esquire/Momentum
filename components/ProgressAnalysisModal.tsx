@@ -4,7 +4,6 @@ import { Icon } from './Icon';
 import { generateProgressAnalysisReport } from '../services/geminiService';
 import { LanguageContext } from '../contexts/LanguageContext';
 
-declare const html2canvas: any;
 declare const jspdf: any;
 
 interface ProgressAnalysisModalProps {
@@ -13,22 +12,18 @@ interface ProgressAnalysisModalProps {
   onClose: () => void;
 }
 
-// Helper function to render inline formatting like bold and italic text
+// Helper function to render inline formatting like bold text for the on-screen display
 const renderInlineFormatting = (text: string) => {
-    // Split by bold/italic tags, keeping the tags to process them
-    const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+    const parts = text.split(/(\*\*.*?\*\*)/g);
     return parts.map((part, i) => {
         if (part.startsWith('**') && part.endsWith('**')) {
             return <strong key={i} className="font-bold text-brand-text">{part.slice(2, -2)}</strong>;
-        }
-         if (part.startsWith('*') && part.endsWith('*')) {
-            return <em key={i} className="italic">{part.slice(1, -1)}</em>;
         }
         return part;
     });
 };
 
-// Renders the full text with styled headings, paragraphs, and lists
+// Renders the full text with styled headings, paragraphs, and lists for on-screen display
 const renderStyledText = (markdownText: string) => {
     const lines = markdownText.split('\n');
     const elements: React.ReactNode[] = [];
@@ -48,35 +43,33 @@ const renderStyledText = (markdownText: string) => {
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
-        // Treat blank lines as separators
         if (line.trim() === '') {
             flushList();
             continue;
         }
         
-        const isListItem = line.startsWith('* ') || line.startsWith('- ');
+        const isListItem = line.match(/^\s*(-|\*|\d+\.)\s/);
 
         if (isListItem) {
             currentListItems.push(
-                <li key={i}>{renderInlineFormatting(line.substring(2))}</li>
+                <li key={i}>{renderInlineFormatting(line.replace(/^\s*(-|\*|\d+\.)\s/, ''))}</li>
             );
         } else {
-            flushList(); // End any existing list before processing a non-list item
+            flushList();
 
             if (line.match(/^# /)) {
                 elements.push(<h1 key={i} className="text-2xl font-bold mt-4 text-brand-text border-b-2 border-brand-secondary pb-2">{renderInlineFormatting(line.substring(2))}</h1>);
             } else if (line.match(/^## /)) {
                 elements.push(<h2 key={i} className="text-xl font-bold mt-4 text-brand-text border-b border-brand-secondary/70 pb-1">{renderInlineFormatting(line.substring(3))}</h2>);
-            } else if (line.match(/^### /) || line.match(/^\d\.\s/)) {
-                const text = line.startsWith('###') ? line.substring(4) : line.substring(line.indexOf(' ') + 1);
-                elements.push(<h3 key={i} className="text-lg font-bold mt-3 text-brand-primary">{renderInlineFormatting(text)}</h3>);
+            } else if (line.match(/^### /)) {
+                elements.push(<h3 key={i} className="text-lg font-bold mt-3 text-brand-primary">{renderInlineFormatting(line.substring(4))}</h3>);
             } else {
                 elements.push(<p key={i} className="my-2">{renderInlineFormatting(line)}</p>);
             }
         }
     }
     
-    flushList(); // Flush any remaining list items at the end of the text
+    flushList();
 
     return elements;
 };
@@ -164,16 +157,22 @@ export const ProgressAnalysisModal: React.FC<ProgressAnalysisModalProps> = ({ us
         let spaceAfter = 2;
         let hasLine = false;
 
-        if (block.match(/^# /)) {
-            fontSize = 20; text = block.substring(2); spaceBefore = 8; spaceAfter = 4; hasLine = true;
-        } else if (block.match(/^## /)) {
-            fontSize = 16; text = block.substring(3); spaceBefore = 8; spaceAfter = 3;
-        } else if (block.match(/^### /) || block.match(/^\d\.\s/)) {
-            fontSize = 12; color = BRAND_COLOR;
-            text = block.startsWith('###') ? block.substring(4) : block.substring(block.indexOf(' ') + 1);
-            spaceBefore = 6; spaceAfter = 2;
-        } else if (block.startsWith('* ') || block.startsWith('- ')) {
-            text = block.substring(2); isList = true; leftMargin += 5; spaceBefore = 1; spaceAfter = 1; fontSize = 10;
+        const headingMatch = text.match(/^(#+)\s(.*)/);
+        const listMatch = text.match(/^\s*(-|\*|\d+\.)\s(.*)/);
+
+        if (headingMatch) {
+            const level = headingMatch[1].length;
+            text = headingMatch[2];
+            if (level === 1) { fontSize = 20; spaceBefore = 8; spaceAfter = 4; hasLine = true; }
+            if (level === 2) { fontSize = 16; spaceBefore = 8; spaceAfter = 3; }
+            if (level === 3) { fontSize = 12; color = BRAND_COLOR; spaceBefore = 6; spaceAfter = 2; }
+        } else if (listMatch) {
+            text = listMatch[2];
+            isList = true;
+            leftMargin += 5;
+            spaceBefore = 1;
+            spaceAfter = 1;
+            fontSize = 10;
         }
 
         y += spaceBefore;
@@ -275,14 +274,12 @@ export const ProgressAnalysisModal: React.FC<ProgressAnalysisModalProps> = ({ us
     blocks.forEach(renderBlock);
 
     const totalPages = pdf.internal.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-        if (i > 1) { 
-            pdf.setPage(i);
-            pdf.setFontSize(9);
-            pdf.setTextColor(MUTED_COLOR);
-            pdf.text("Momentum AI Progress Report", PAGE_MARGIN_X, HEADER_Y);
-            pdf.text(`Page ${i} of ${totalPages}`, pdfWidth - PAGE_MARGIN_X, HEADER_Y, { align: 'right' });
-        }
+    for (let i = 2; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(9);
+        pdf.setTextColor(MUTED_COLOR);
+        pdf.text("Momentum AI Progress Report", PAGE_MARGIN_X, HEADER_Y);
+        pdf.text(`Page ${i - 1} of ${totalPages - 1}`, pdfWidth - PAGE_MARGIN_X, HEADER_Y, { align: 'right' });
     }
 
     pdf.save(`Momentum_AI_Report_${user.name.replace(/\s/g, '_')}.pdf`);

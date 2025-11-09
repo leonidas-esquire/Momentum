@@ -38,6 +38,13 @@ export interface User {
   teamId?: string;
 }
 
+export interface Reminder {
+  type: 'time' | 'location';
+  time?: string; // HH:MM format
+  location?: 'home' | 'work';
+  locationLabel?: string;
+}
+
 export interface Habit {
   id: string;
   title: string;
@@ -51,6 +58,7 @@ export interface Habit {
   momentumShields: number;
   missedDays: number;
   isFavorite?: boolean;
+  reminder?: Reminder;
 }
 
 export interface BlueprintHabit {

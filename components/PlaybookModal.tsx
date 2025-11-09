@@ -130,9 +130,24 @@ For larger organizations, the Team Hub provides leaderboards and team-wide chall
 *   **Customize Everything:** Go to **Settings** to change your app's theme, language, and even the gender and personality of the AI's voice to make the experience truly your own.
 `;
 
-// Helper function to render inline formatting like bold and italic text
+// Helper function to render inline formatting for on-screen display
 const renderInlineFormatting = (text: string) => {
-    const parts = text.split(/(\*\*.*?\*\*|`.*?`)/g);
+    // Replace emojis with text for display consistency
+    const cleanText = text
+      .replace(/🔥/g, '(Streak)')
+      .replace(/🛡️/g, '(Shield)')
+      .replace(/📉/g, '(Missed)')
+      .replace(/⭐/g, '(Favorite)')
+      .replace(/✅/g, '(Complete)')
+      .replace(/✏️/g, '(Edit)')
+      .replace(/🗑️/g, '(Delete)')
+      .replace(/🎤/g, '(Voice Note)')
+      .replace(/🤝/g, '(Momentum)')
+      .replace(/🏆/g, '(Quest)')
+      .replace(/⚔️/g, '(Saga)')
+      .replace(/💬/g, '(Chat)');
+
+    const parts = cleanText.split(/(\*\*.*?\*\*|`.*?`)/g);
     return parts.map((part, i) => {
         if (part.startsWith('**') && part.endsWith('**')) {
             return <strong key={i} className="font-bold text-brand-text">{part.slice(2, -2)}</strong>;
@@ -144,7 +159,7 @@ const renderInlineFormatting = (text: string) => {
     });
 };
 
-// Renders the full text with styled headings, paragraphs, and lists
+// Renders the full text with styled headings, paragraphs, and lists for on-screen display
 const renderStyledText = (markdownText: string) => {
     const lines = markdownText.trim().split('\n');
     const elements: React.ReactNode[] = [];
@@ -169,11 +184,12 @@ const renderStyledText = (markdownText: string) => {
             continue;
         }
         
-        const isListItem = line.startsWith('* ') || line.startsWith('- ');
+        const isListItem = line.match(/^\s*(-|\*|\d+\.)\s/);
+        const isBlockquote = line.startsWith('> ');
 
         if (isListItem) {
             currentListItems.push(
-                <li key={i}>{renderInlineFormatting(line.substring(2))}</li>
+                <li key={i} className="pl-2">{renderInlineFormatting(line.replace(/^\s*(-|\*|\d+\.)\s/, ''))}</li>
             );
         } else {
             flushList();
@@ -181,23 +197,23 @@ const renderStyledText = (markdownText: string) => {
             if (line.startsWith('# ')) {
                 elements.push(<h1 key={i} className="text-3xl font-bold mt-6 mb-3 text-brand-text border-b-2 border-brand-secondary pb-2">{renderInlineFormatting(line.substring(2))}</h1>);
             } else if (line.startsWith('## ')) {
-                elements.push(<h2 key={i} className="text-2xl font-bold mt-6 mb-2 text-brand-text border-b border-brand-secondary/70 pb-1">{renderInlineFormatting(line.substring(3))}</h2>);
+                elements.push(<h2 key={i} className="text-2xl font-bold mt-5 mb-2 text-brand-text">{renderInlineFormatting(line.substring(3))}</h2>);
             } else if (line.startsWith('### ')) {
-                elements.push(<h3 key={i} className="text-xl font-bold mt-5 mb-1 text-brand-primary">{renderInlineFormatting(line.substring(4))}</h3>);
-            } else if (line.startsWith('> ')) {
-                elements.push(<blockquote key={i} className="border-l-4 border-brand-secondary pl-4 my-3 italic text-brand-text">{renderInlineFormatting(line.substring(2))}</blockquote>)
-            }
-             else {
-                elements.push(<p key={i} className="my-2 leading-relaxed">{renderInlineFormatting(line)}</p>);
+                elements.push(<h3 key={i} className="text-xl font-bold mt-4 mb-2 text-brand-primary">{renderInlineFormatting(line.substring(4))}</h3>);
+            } else if (line.startsWith('#### ')) {
+                elements.push(<h4 key={i} className="text-lg font-semibold mt-3 mb-1 text-brand-text">{renderInlineFormatting(line.substring(5))}</h4>);
+            } else if (isBlockquote) {
+                elements.push(<blockquote key={i} className="border-l-4 border-brand-primary/50 bg-brand-bg pl-4 py-2 my-3 italic">{renderInlineFormatting(line.substring(2))}</blockquote>)
+            } else {
+                elements.push(<p key={i} className="my-2">{renderInlineFormatting(line)}</p>);
             }
         }
     }
     
-    flushList();
+    flushList(); // Make sure to render any list at the end
 
     return elements;
 };
-
 
 export const PlaybookModal: React.FC<PlaybookModalProps> = ({ onClose }) => {
 
@@ -222,13 +238,13 @@ export const PlaybookModal: React.FC<PlaybookModalProps> = ({ onClose }) => {
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(40);
         pdf.setTextColor('#FFFFFF');
-        pdf.text("Momentum", pdfWidth / 2, 80, { align: 'center' });
-        pdf.setFontSize(20);
+        pdf.text("Momentum", pdfWidth / 2, 100, { align: 'center' });
+        pdf.setFontSize(24);
         pdf.setTextColor('#E4E4E6');
-        pdf.text("The Ultimate Playbook", pdfWidth / 2, 100, { align: 'center' });
+        pdf.text("The Ultimate Playbook", pdfWidth / 2, 120, { align: 'center' });
         pdf.setDrawColor('#FFFFFF');
         pdf.setLineWidth(0.5);
-        pdf.line(PAGE_MARGIN_X, 130, pdfWidth - PAGE_MARGIN_X, 130);
+        pdf.line(PAGE_MARGIN_X, 150, pdfWidth - PAGE_MARGIN_X, 150);
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(12);
         pdf.setTextColor('#A0A0B0');
@@ -238,99 +254,121 @@ export const PlaybookModal: React.FC<PlaybookModalProps> = ({ onClose }) => {
         pdf.addPage();
         pdf.setTextColor(TEXT_COLOR);
         let y = PAGE_MARGIN_Y;
+        let pageCount = 1;
 
         const checkPageBreak = (neededHeight: number) => {
             if (y + neededHeight > pdfHeight - PAGE_MARGIN_Y) {
                 pdf.addPage();
                 y = PAGE_MARGIN_Y;
+                pageCount++;
             }
         };
         
-        const lines = PLAYBOOK_MARKDOWN.trim().split('\n');
-
-        for(const line of lines) {
-            if (line.trim() === '') {
-                y += 5; // Add space for paragraph breaks
-                checkPageBreak(0);
-                continue;
-            }
-
-            let text = line;
-            let fontSize = 11;
-            let style = 'normal';
+        const renderBlock = (block: string) => {
+            let fontSize = 10;
+            let fontStyle = 'normal';
             let color = TEXT_COLOR;
+            let text = block.trim()
+                .replace(/🔥/g, "(Streak)")
+                .replace(/🛡️/g, "(Shield)")
+                .replace(/📉/g, "(Missed)")
+                .replace(/⭐/g, "(Favorite)")
+                .replace(/✅/g, "(Complete)")
+                .replace(/✏️/g, "(Edit)")
+                .replace(/🗑️/g, "(Delete)")
+                .replace(/🎤/g, "(Voice Note)")
+                .replace(/🤝/g, "(Momentum)")
+                .replace(/🏆/g, "(Quest)")
+                .replace(/⚔️/g, "(Saga)")
+                .replace(/💬/g, "(Chat)")
+                .replace(/`/g, ''); // Remove backticks
+
             let leftMargin = PAGE_MARGIN_X;
             let spaceBefore = 2;
+            let spaceAfter = 1;
+            let isList = false;
+            let isBlockquote = false;
 
-            if (line.startsWith('# ')) {
-                text = line.substring(2); fontSize = 24; style = 'bold'; spaceBefore = 10;
-            } else if (line.startsWith('## ')) {
-                text = line.substring(3); fontSize = 18; style = 'bold'; spaceBefore = 8;
-            } else if (line.startsWith('### ')) {
-                text = line.substring(4); fontSize = 14; style = 'bold'; color = BRAND_COLOR; spaceBefore = 6;
-            } else if (line.startsWith('* ') || line.startsWith('- ')) {
-                text = '• ' + line.substring(2);
-                leftMargin += 5;
-            } else if (line.startsWith('> ')) {
-                text = line.substring(2); style = 'italic'; color = MUTED_COLOR;
-            }
+            if (text.startsWith('# ')) { fontSize = 22; fontStyle = 'bold'; text = text.substring(2); spaceBefore = 8; spaceAfter = 4; }
+            else if (text.startsWith('## ')) { fontSize = 18; fontStyle = 'bold'; text = text.substring(3); spaceBefore = 6; spaceAfter = 3; }
+            else if (text.startsWith('### ')) { fontSize = 14; fontStyle = 'bold'; text = text.substring(4); spaceBefore = 5; spaceAfter = 2; color = BRAND_COLOR;}
+            else if (text.startsWith('#### ')) { fontSize = 12; fontStyle = 'bold'; text = text.substring(5); spaceBefore = 4; spaceAfter = 2; }
+            else if (text.startsWith('> ')) { isBlockquote = true; text = text.substring(2); color = MUTED_COLOR; fontStyle='italic'; leftMargin += 5; spaceBefore = 3; spaceAfter = 3;}
+            else if (text.match(/^\s*(-|\*|\d+\.)\s/)) { isList = true; text = text.replace(/^\s*(-|\*|\d+\.)\s/, ''); leftMargin += 5; spaceBefore = 1; spaceAfter = 1; }
 
             y += spaceBefore;
-            checkPageBreak(10); // Check before processing to avoid splitting headings
-            
-            pdf.setFont('helvetica', style);
+            checkPageBreak(fontSize * 0.35);
+
+            pdf.setFont('helvetica', fontStyle);
             pdf.setFontSize(fontSize);
             pdf.setTextColor(color);
             
-            const splitText = pdf.splitTextToSize(text, MAX_WIDTH - (leftMargin - PAGE_MARGIN_X));
-            
-            for(const textLine of splitText) {
-                const lineHeight = pdf.getTextDimensions(textLine).h;
-                checkPageBreak(lineHeight);
-                pdf.text(textLine, leftMargin, y);
-                y += lineHeight;
+            if (isBlockquote) {
+                pdf.setFillColor('#F9FAFB');
+                const quoteLines = pdf.splitTextToSize(text, MAX_WIDTH - 5);
+                const quoteHeight = quoteLines.length * (pdf.getLineHeight(text) / pdf.internal.scaleFactor) * 0.8;
+                pdf.rect(PAGE_MARGIN_X, y - 2, 2, quoteHeight + 2, 'F');
             }
-        }
+
+            const lines = pdf.splitTextToSize(text, MAX_WIDTH - (leftMargin - PAGE_MARGIN_X));
+            
+            lines.forEach((line: string, index: number) => {
+                const lineHeight = (pdf.getLineHeight(line) / pdf.internal.scaleFactor) * 0.8;
+                checkPageBreak(lineHeight);
+                if (isList && index === 0) {
+                     pdf.setFillColor(TEXT_COLOR);
+                     pdf.circle(PAGE_MARGIN_X + 2.5, y - (lineHeight/2) + 2, 0.8, 'F');
+                }
+                pdf.text(line, leftMargin, y);
+                y += lineHeight;
+            });
+
+            y += spaceAfter;
+        };
+
+        const blocks = PLAYBOOK_MARKDOWN.split(/\n\s*\n/);
+        blocks.forEach(block => renderBlock(block));
         
+        // Add headers and footers to all content pages
         const totalPages = pdf.internal.getNumberOfPages();
         for (let i = 2; i <= totalPages; i++) {
             pdf.setPage(i);
             pdf.setFontSize(9);
             pdf.setTextColor(MUTED_COLOR);
             pdf.text("Momentum Playbook", PAGE_MARGIN_X, HEADER_Y);
-            pdf.text(`Page ${i-1} of ${totalPages-1}`, pdfWidth - PAGE_MARGIN_X, HEADER_Y, { align: 'right' });
+            pdf.text(`Page ${i - 1} of ${totalPages - 1}`, pdfWidth - PAGE_MARGIN_X, HEADER_Y, { align: 'right' });
         }
 
         pdf.save(`Momentum_Playbook.pdf`);
-      };
+    };
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-fade-in">
-            <div className="bg-brand-surface w-full max-w-3xl rounded-2xl border border-brand-secondary shadow-2xl flex flex-col animate-slide-in-up">
-                <header className="p-6 border-b border-brand-secondary flex justify-between items-center flex-shrink-0">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <Icon name="book-open" className="w-6 h-6" />
-                    Momentum Playbook
-                </h2>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={handleExportToPDF}
-                        className="flex items-center gap-1.5 text-brand-text-muted font-semibold text-sm hover:text-white py-2 px-3 rounded-full hover:bg-brand-secondary/20 transition-colors"
-                        title="Export to PDF"
-                    >
-                        <Icon name="arrow-down-tray" className="w-5 h-5" />
-                        <span>Export PDF</span>
-                    </button>
-                    <button onClick={onClose} className="text-brand-text-muted hover:text-white p-1 rounded-full text-2xl w-8 h-8 flex items-center justify-center">&times;</button>
-                </div>
-                </header>
-
-                <div className="overflow-y-auto max-h-[70vh]">
-                    <div className="p-6 md:p-8 text-brand-text-muted">
-                        {renderStyledText(PLAYBOOK_MARKDOWN)}
-                    </div>
+          <div className="bg-brand-surface w-full max-w-3xl h-[90vh] rounded-2xl border border-brand-secondary shadow-2xl flex flex-col animate-slide-in-up">
+            <header className="p-4 sm:p-6 border-b border-brand-secondary flex justify-between items-center flex-shrink-0">
+              <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+                <Icon name="book-open" className="w-6 h-6" />
+                Momentum App Playbook
+              </h2>
+              <div className="flex items-center gap-2">
+                 <button
+                    onClick={handleExportToPDF}
+                    className="flex items-center gap-1.5 text-brand-text-muted font-semibold text-sm hover:text-white py-2 px-3 rounded-full hover:bg-brand-secondary/20 transition-colors"
+                    title="Export to PDF"
+                  >
+                  <Icon name="arrow-down-tray" className="w-5 h-5" />
+                  <span className="hidden sm:inline">Export PDF</span>
+                </button>
+                <button onClick={onClose} className="text-brand-text-muted hover:text-white p-1 rounded-full text-2xl w-8 h-8 flex items-center justify-center">&times;</button>
+              </div>
+            </header>
+    
+            <div className="overflow-y-auto flex-grow">
+                <div className="p-6 md:p-8 text-brand-text-muted">
+                    {renderStyledText(PLAYBOOK_MARKDOWN)}
                 </div>
             </div>
+          </div>
         </div>
-    );
+      );
 };
